@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Viewports">
+      <UniqueIdentifier>{2dd452de-a942-4b95-9da5-71628409fa1c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Viewports">
+      <UniqueIdentifier>{98b6f1b5-8435-471e-8433-fd0704912aa5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Exporters">
+      <UniqueIdentifier>{bf80d05d-9d92-4ee5-9fd2-26feeb793ae8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MiniXml">
+      <UniqueIdentifier>{04549dc9-362d-4c4f-9c95-149e708c8da0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GVFramework">
+      <UniqueIdentifier>{5e6df636-fe9c-440f-8aaa-a2e952189f0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\SDL3">
+      <UniqueIdentifier>{0d880042-02c7-47c4-9cb3-4335bbd9ba85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GVFramework\Chunk">
+      <UniqueIdentifier>{ae31124b-fd6f-4c54-8f3e-f88b42af19d2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GVFramework\LogicUnit">
+      <UniqueIdentifier>{8308e341-0142-4258-8671-16777ba6f7d7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GVFramework\Scene">
+      <UniqueIdentifier>{5239017e-f63d-4f47-bf49-f7057cfd8b64}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MiniXml">
+      <UniqueIdentifier>{ef9c3c49-7337-4f43-bf4d-8f7ee0a0941f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GVFramework">
+      <UniqueIdentifier>{28c0a45c-5870-4349-a8c6-1463b2644235}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Exporters">
+      <UniqueIdentifier>{d8727bf1-1e5c-466f-9cde-3ec5348c83a7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GVFramework\Chunk">
+      <UniqueIdentifier>{1adee61b-051d-4726-b9b8-b7c336693fef}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GVFramework\Scene">
+      <UniqueIdentifier>{4fd39d56-0a3d-477b-80ff-598e20455241}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\GVFramework\LogicUnit">
+      <UniqueIdentifier>{83d3a5a7-7d50-403d-8a12-fae6f7483d72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\imgui">
+      <UniqueIdentifier>{49135d2d-36b4-4dfc-bc4f-df99bcc5e403}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\imgui">
+      <UniqueIdentifier>{738099d2-decf-483b-8802-61da0268465b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
