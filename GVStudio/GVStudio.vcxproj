@@ -102,7 +102,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <WarningLevel>Level3</WarningLevel>
+      <WarningLevel>Level2</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
@@ -113,6 +113,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(ProjectDir)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3/SDL3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>xcopy /Y /D "$(ProjectDir)\bin\SDL3.dll" "$(OutDir)"</Command>
@@ -133,7 +134,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\GVFramework\Scene\SceneManager.cpp" />
+    <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp" />
+    <ClCompile Include="src\GVStudio\GVStudio.cpp" />
     <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h" />
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitMacros.h" />
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitParser.h" />
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitTypes.h" />
+    <ClInclude Include="include\GVFramework\Scene\SceneManager.h" />
+    <ClInclude Include="include\GVFramework\Scene\SceneObject.h" />
+    <ClInclude Include="include\GVStudio\GVStudio.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

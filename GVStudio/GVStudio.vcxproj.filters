@@ -64,10 +64,48 @@
     <Filter Include="Header Files\imgui">
       <UniqueIdentifier>{738099d2-decf-483b-8802-61da0268465b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\GVStudio">
+      <UniqueIdentifier>{d8d9ffb6-5a45-460b-a02e-e46eb68a5da4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\GVStudio">
+      <UniqueIdentifier>{88d16d70-fab0-4791-8045-993af89a59b3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\GVStudio\GVStudio.cpp">
+      <Filter>Source Files\GVStudio</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GVFramework\Scene\SceneManager.cpp">
+      <Filter>Source Files\GVFramework\Scene</Filter>
+    </ClCompile>
+    <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp">
+      <Filter>Source Files\GVFramework\Scene</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\GVStudio\GVStudio.h">
+      <Filter>Header Files\GVStudio</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\Scene\SceneManager.h">
+      <Filter>Header Files\GVFramework\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h">
+      <Filter>Header Files\GVFramework\LogicUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitMacros.h">
+      <Filter>Header Files\GVFramework\LogicUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitParser.h">
+      <Filter>Header Files\GVFramework\LogicUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitTypes.h">
+      <Filter>Header Files\GVFramework\LogicUnit</Filter>
+    </ClInclude>
+    <ClInclude Include="include\GVFramework\Scene\SceneObject.h">
+      <Filter>Header Files\GVFramework\Scene</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
