@@ -84,6 +84,15 @@
     <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp">
       <Filter>Source Files\GVFramework\Scene</Filter>
     </ClCompile>
+    <ClCompile Include="src\MiniXml\MiniXml.cpp">
+      <Filter>Source Files\MiniXml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniXml\ObjectXml.cpp">
+      <Filter>Source Files\MiniXml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniXml\SceneXml.cpp">
+      <Filter>Source Files\MiniXml</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GVStudio\GVStudio.h">
@@ -106,6 +115,15 @@
     </ClInclude>
     <ClInclude Include="include\GVFramework\Scene\SceneObject.h">
       <Filter>Header Files\GVFramework\Scene</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MiniXml\MiniXml.h">
+      <Filter>Header Files\MiniXml</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MiniXml\ObjectXml.h">
+      <Filter>Header Files\MiniXml</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MiniXml\SceneXml.h">
+      <Filter>Header Files\MiniXml</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

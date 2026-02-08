@@ -138,6 +138,9 @@
     <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp" />
     <ClCompile Include="src\GVStudio\GVStudio.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\MiniXml\MiniXml.cpp" />
+    <ClCompile Include="src\MiniXml\ObjectXml.cpp" />
+    <ClCompile Include="src\MiniXml\SceneXml.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h" />
@@ -147,6 +150,9 @@
     <ClInclude Include="include\GVFramework\Scene\SceneManager.h" />
     <ClInclude Include="include\GVFramework\Scene\SceneObject.h" />
     <ClInclude Include="include\GVStudio\GVStudio.h" />
+    <ClInclude Include="include\MiniXml\MiniXml.h" />
+    <ClInclude Include="include\MiniXml\ObjectXml.h" />
+    <ClInclude Include="include\MiniXml\SceneXml.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
