@@ -1,5 +1,7 @@
 #pragma once
 
+#include "GVFramework/Chunk/Chunk.h"
+
 #include <vector>
 #include <string>
 
@@ -20,6 +22,7 @@ struct LU_Param_Def // Params gotten from parser
 	ParamType type;
 	bool isMutable = false;
 	std::string defaultValue;
+	std::string hint;
 };
 
 struct LU_Param_Val // Parameter values used by editor
@@ -36,6 +39,7 @@ struct LU_Param_Val // Parameter values used by editor
 struct GV_Logic_Unit // Logic unit gotten from parser
 {
 	std::string typeName;
+	GV_ChunkType chunkType;
 	std::vector<LU_Param_Def> params;
 };
 

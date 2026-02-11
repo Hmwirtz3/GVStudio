@@ -134,22 +134,63 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Database\AssetDatabase.cpp" />
+    <ClCompile Include="src\Database\LogicUnitRegistry.cpp" />
+    <ClCompile Include="src\GVFramework\LogicUnit\LogicUnitParser.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneManager.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp" />
     <ClCompile Include="src\GVStudio\GVStudio.cpp" />
+    <ClCompile Include="src\imgui\imgui.cpp" />
+    <ClCompile Include="src\imgui\imgui_demo.cpp" />
+    <ClCompile Include="src\imgui\imgui_draw.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_sdl3.cpp" />
+    <ClCompile Include="src\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="src\imgui\imgui_tables.cpp" />
+    <ClCompile Include="src\imgui\imgui_widgets.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MiniXml\MiniXml.cpp" />
     <ClCompile Include="src\MiniXml\ObjectXml.cpp" />
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\Database\AssetDatabase.h" />
+    <ClInclude Include="include\Database\LogicUnitRegistry.h" />
+    <ClInclude Include="include\GVFramework\Chunk\Chunk.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitMacros.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitParser.h" />
-    <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitTypes.h" />
     <ClInclude Include="include\GVFramework\Scene\SceneManager.h" />
     <ClInclude Include="include\GVFramework\Scene\SceneObject.h" />
     <ClInclude Include="include\GVStudio\GVStudio.h" />
+    <ClInclude Include="include\imgui\imconfig.h" />
+    <ClInclude Include="include\imgui\imgui.h" />
+    <ClInclude Include="include\imgui\imgui_impl_allegro5.h" />
+    <ClInclude Include="include\imgui\imgui_impl_android.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx10.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="include\imgui\imgui_impl_dx9.h" />
+    <ClInclude Include="include\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="include\imgui\imgui_impl_glut.h" />
+    <ClInclude Include="include\imgui\imgui_impl_metal.h" />
+    <ClInclude Include="include\imgui\imgui_impl_opengl2.h" />
+    <ClInclude Include="include\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="include\imgui\imgui_impl_osx.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdl2.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdl3.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdlgpu3.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdlgpu3_shaders.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdlrenderer2.h" />
+    <ClInclude Include="include\imgui\imgui_impl_sdlrenderer3.h" />
+    <ClInclude Include="include\imgui\imgui_impl_vulkan.h" />
+    <ClInclude Include="include\imgui\imgui_impl_wgpu.h" />
+    <ClInclude Include="include\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="include\imgui\imgui_internal.h" />
+    <ClInclude Include="include\imgui\imstb_rectpack.h" />
+    <ClInclude Include="include\imgui\imstb_textedit.h" />
+    <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="include\MiniXml\MiniXml.h" />
     <ClInclude Include="include\MiniXml\ObjectXml.h" />
     <ClInclude Include="include\MiniXml\SceneXml.h" />

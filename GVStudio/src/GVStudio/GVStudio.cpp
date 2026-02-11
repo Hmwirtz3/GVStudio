@@ -5,6 +5,15 @@
 
 
 
+GV_STUDIO::GV_STUDIO()
+    : m_rootFolder(),
+    m_logicRegistry(),
+    m_sceneManager(m_rootFolder, m_logicRegistry),
+    m_assetDataBase()
+{
+}
+
+
 int GV_STUDIO::RUN()
 {
 	return 0;
@@ -13,3 +22,4 @@ int GV_STUDIO::RUN()
 void GV_STUDIO::ShowStartupDialog(GV_State)
 {
 }
+

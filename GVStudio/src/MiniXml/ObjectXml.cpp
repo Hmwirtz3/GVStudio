@@ -1,10 +1,10 @@
 #include "MiniXml/ObjectXml.h"
 #include "GVFramework/Scene/SceneObject.h"
+#include "Database/LogicUnitRegistry.h"
 #include "MiniXML/MiniXml.h"
 
 #include <cstdlib>
 #include <iostream>
-
 
 namespace
 {
@@ -13,16 +13,6 @@ namespace
         for (const XmlAttribute& a : node.attributes)
             if (a.name == name)
                 return &a;
-        return nullptr;
-    }
-
-    const GV_Logic_Unit* FindDefinition(
-        const std::vector<GV_Logic_Unit>& defs,
-        const std::string& typeName)
-    {
-        for (const GV_Logic_Unit& d : defs)
-            if (d.typeName == typeName)
-                return &d;
         return nullptr;
     }
 
@@ -40,7 +30,7 @@ namespace ObjectXml
     bool LoadObjectFromXml(
         SceneObject& obj,
         const std::string& xmlPath,
-        const std::vector<GV_Logic_Unit>& definitions)
+        LogicUnitRegistry& registry)
     {
         XmlNode root;
         if (!XmlLoadFromFile(xmlPath, root))
@@ -72,7 +62,7 @@ namespace ObjectXml
         if (!nameAttr)
             return true;
 
-        const GV_Logic_Unit* def = FindDefinition(definitions, nameAttr->value);
+        const GV_Logic_Unit* def = registry.Find(nameAttr->value);
         if (!def)
             return true;
 
@@ -132,7 +122,7 @@ namespace ObjectXml
     bool SaveObjectToXml(
         const SceneObject& obj,
         const std::string& xmlPath,
-        const std::vector<GV_Logic_Unit>&)
+        LogicUnitRegistry& registry)
     {
         XmlNode root;
         root.name = "Object";
