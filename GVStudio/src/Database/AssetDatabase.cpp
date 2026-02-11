@@ -2,16 +2,10 @@
 
 #include <filesystem>
 #include <fstream>
-#include <sstream>
-#include <algorithm>
 
-namespace fs = std::filesystem;
-
-static std::string ToLower(std::string s)
+AssetDatabase::AssetDatabase()
 {
-    std::transform(s.begin(), s.end(), s.begin(),
-        [](unsigned char c) { return std::tolower(c); });
-    return s;
+    RegisterExtractors();
 }
 
 void AssetDatabase::Clear()
@@ -19,37 +13,206 @@ void AssetDatabase::Clear()
     m_assets.clear();
 }
 
-void AssetDatabase::Scan(const std::string& resourceRoot)
+void AssetDatabase::RegisterExtractors()
 {
-    Clear();
+    // TEXTURE
+    m_extractors[GV_CHUNK_TEXTURE] =
+        [this](const GV_Logic_Unit_Instance& inst,
+            std::vector<std::string>& out)
+        {
+            std::vector<std::string> names =
+            {
+                "texture",
+                "texturePath",
+                "albedo",
+                "diffuse",
+                "path"
+            };
 
-    if (!fs::exists(resourceRoot))
+            int idx = FindParamIndex(inst.def, names);
+            if (idx >= 0 && idx < (int)inst.values.size())
+            {
+                const std::string& p = inst.values[idx].sval;
+                if (!p.empty())
+                    out.push_back(p);
+            }
+        };
+
+    // MODEL
+    m_extractors[GV_CHUNK_STATIC_MESH] =
+        [this](const GV_Logic_Unit_Instance& inst,
+            std::vector<std::string>& out)
+        {
+            std::vector<std::string> names =
+            {
+                "model",
+                "mesh",
+                "clump",
+                "modelPath",
+                "path"
+            };
+
+            int idx = FindParamIndex(inst.def, names);
+            if (idx >= 0 && idx < (int)inst.values.size())
+            {
+                const std::string& p = inst.values[idx].sval;
+                if (!p.empty())
+                    out.push_back(p);
+            }
+        };
+
+    // HEIGHTMAP
+    m_extractors[GV_CHUNK_HEIGHTMAP] =
+        [this](const GV_Logic_Unit_Instance& inst,
+            std::vector<std::string>& out)
+        {
+            std::vector<std::string> names =
+            {
+                "heightmap",
+                "heightmapTexture",
+                "heightmapPath",
+                "path"
+            };
+
+            int idx = FindParamIndex(inst.def, names);
+            if (idx >= 0 && idx < (int)inst.values.size())
+            {
+                const std::string& p = inst.values[idx].sval;
+                if (!p.empty())
+                    out.push_back(p);
+            }
+        };
+}
+
+int AssetDatabase::FindParamIndex(
+    const GV_Logic_Unit* def,
+    const std::vector<std::string>& names) const
+{
+    if (!def)
+        return -1;
+
+    for (const auto& want : names)
+    {
+        for (int i = 0; i < (int)def->params.size(); i++)
+        {
+            if (def->params[i].name == want)
+                return i;
+        }
+    }
+
+    return -1;
+}
+
+void AssetDatabase::ProcessLogicUnitInstance(
+    const GV_Logic_Unit_Instance& instance)
+{
+    if (!instance.def)
         return;
 
-    for (auto& entry : fs::recursive_directory_iterator(resourceRoot))
+    GV_ChunkType type = instance.def->chunkType;
+
+    auto it = m_extractors.find(type);
+    if (it == m_extractors.end())
+        return;
+
+    std::vector<std::string> paths;
+    it->second(instance, paths);
+
+    for (const auto& p : paths)
+        AddAsset(type, p);
+}
+
+void AssetDatabase::AddAsset(
+    GV_ChunkType type,
+    const std::string& path)
+{
+    if (path.empty())
+        return;
+
+    if (m_assets.find(path) != m_assets.end())
+        return;
+
+    AssetEntry entry;
+    entry.path = path;
+    entry.type = type;
+
+    try
     {
-        if (!entry.is_regular_file())
-            continue;
-        ProcessFile(resourceRoot, entry.path().string());
+        std::filesystem::path fp(path);
+        entry.name = fp.stem().string();
+    }
+    catch (...)
+    {
+        entry.name = path;
+    }
+
+    ParseDependencies(entry);
+
+    m_assets[path] = std::move(entry);
+}
+
+void AssetDatabase::ParseDependencies(AssetEntry& entry)
+{
+    if (entry.type != GV_CHUNK_STATIC_MESH)
+        return;
+
+    std::ifstream file(entry.path);
+    if (!file.is_open())
+        return;
+
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        if (line.rfind("mtllib ", 0) == 0)
+        {
+            std::string mtlFile = line.substr(7);
+
+            std::filesystem::path modelPath(entry.path);
+            std::filesystem::path mtlPath =
+                modelPath.parent_path() / mtlFile;
+
+            std::ifstream mtl(mtlPath.string());
+            if (!mtl.is_open())
+                continue;
+
+            std::string mtlLine;
+
+            while (std::getline(mtl, mtlLine))
+            {
+                if (mtlLine.rfind("map_Kd ", 0) == 0)
+                {
+                    std::string texName = mtlLine.substr(7);
+                    std::filesystem::path texPath =
+                        modelPath.parent_path() / texName;
+
+                    entry.dependencies.push_back(texPath.string());
+                }
+            }
+        }
     }
 }
 
-void AssetDatabase::ProcessFile(const std::string& root, const std::string& fullPath)
+const AssetEntry* AssetDatabase::GetAsset(
+    const std::string& path) const
 {
-    std::string ext = ToLower(fs::path(fullPath).extension().string());
+    auto it = m_assets.find(path);
+    if (it == m_assets.end())
+        return nullptr;
 
-    AssetEntry asset;
+    return &it->second;
+}
 
-    asset.path = fs::relative(fullPath, root).generic_string();
-    asset.name = fs::path(fullPath).stem().string();
+std::vector<const AssetEntry*> AssetDatabase::GetAssetsByChunk(
+    GV_ChunkType type) const
+{
+    std::vector<const AssetEntry*> result;
 
-    if (ext == ".obj")
-        asset.type = GV_CHUNK_STATIC_MESH;
-    else if (ext == ".png" || ext == ".jpg" || ext == ".bmp")
-        asset.type == GV_CHUNK_TEXTURE;
-    
-    
+    for (const auto& [path, entry] : m_assets)
+    {
+        if (entry.type == type)
+            result.push_back(&entry);
+    }
 
-    
-
+    return result;
 }

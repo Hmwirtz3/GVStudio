@@ -7,68 +7,87 @@
 #include "Database/LogicUnitRegistry.h"
 #include "GVFramework/Scene/SceneManager.h"
 
+#include "SDL3/SDL.h"
+
 enum class EditorMode
 {
-	NoProject,
-	ProjectOpen,
-	OpenRecent,
-
+    NoProject,
+    ProjectOpen,
+    OpenRecent
 };
 
 struct GV_Project_Info
 {
-	std::string projectPath;
-	std::string projectName;
-	std::string dataFolder;
-	std::string resourceFolder;
-	std::string sourceFolder;
+    std::string projectPath;
+    std::string projectName;
+    std::string dataFolder;
+    std::string resourceFolder;
+    std::string sourceFolder;
 };
 
 struct GV_Scene_Info
 {
-	std::string scenePath;
-	std::string sceneName;
+    std::string scenePath;
+    std::string sceneName;
 };
 
 struct GV_State
 {
-	EditorMode mode = EditorMode::NoProject;
-	GV_Project_Info project;
-	GV_Scene_Info currentScene;
-	std::vector<GV_Scene_Info> availableScenes;
-	bool showStartupDialog = true;
-	bool quitRequested = false;
-	bool openRecent = false;
+    EditorMode mode = EditorMode::NoProject;
 
-	GV_Scene_Info recentScene;
+    GV_Project_Info project;
+    GV_Scene_Info currentScene;
+    std::vector<GV_Scene_Info> availableScenes;
+
+    bool showStartupDialog = true;
+    bool quitRequested = false;
+    bool openRecent = false;
+
+    GV_Scene_Info recentScene;
 };
 
 class GV_STUDIO
 {
 public:
-	GV_STUDIO();
-	int RUN();
+    GV_STUDIO();
+    ~GV_STUDIO();
+
+    int RUN();
 
 private:
 
-	GV_State m_state;
+    // ---------- Core State ----------
+    GV_State m_state;
 
-	SceneFolder m_rootFolder;              
-	LogicUnitRegistry m_logicRegistry;     
+    
+    SceneFolder m_rootFolder;
+    LogicUnitRegistry m_logicRegistry;
+    SceneManager m_sceneManager;
+    AssetDatabase m_assetDataBase;
 
-	SceneManager m_sceneManager;
+    SceneObject* m_selectedObject = nullptr;
 
-	AssetDatabase m_assetDataBase;
+    bool m_showSceneExplorer = true;
+    bool m_showLogicUnitInspector = true;
+    bool m_showResourceExplorer = true;
 
-	SceneObject* m_selectedObject = nullptr;
+   
+    SDL_Window* m_window = nullptr;
+    SDL_GLContext m_glContext = nullptr;
+    bool m_isInit = false;
+    bool m_imguiInit = false;
 
-	bool m_showSceneExplorer = true;
-	bool m_showLogicUnitInspector = true;
-	bool m_showResourceExplorer = true;
 
-	void ShowStartupDialog(GV_State);
-	void DrawDockspace();
-	void DrawSceneExplorer();
-	void DrawLogicUnitExplorer();
-	void DrawResourceExplorer();
+private:
+    bool InitSDLAndGL();
+    bool InitImGui();
+    void ShutdownImgui();
+    void ShutdownSDLAndGL();
+
+private:
+    void ShowStartupDialog(GV_State state);
+    void DrawDockspace();
+    void DrawSceneExplorer();
+    void DrawLogicUnitExplorer();
+    void DrawResourceExplorer();
 };
