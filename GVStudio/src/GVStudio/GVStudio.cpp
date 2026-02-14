@@ -1,4 +1,6 @@
 #include "GVStudio/GVStudio.h"
+#include "Viewports/StartupDialog.h"
+
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_opengl.h"
@@ -144,9 +146,7 @@ void GV_STUDIO::ShutdownSDLAndGL()
 }
 
 
-// ------------------------------------------------------------
-// RUN
-// ------------------------------------------------------------
+
 
 int GV_STUDIO::RUN()
 {
@@ -158,7 +158,6 @@ int GV_STUDIO::RUN()
     while (running && !m_state.quitRequested)
     {
         SDL_Event e;
-
         while (SDL_PollEvent(&e))
         {
             ImGui_ImplSDL3_ProcessEvent(&e);
@@ -171,10 +170,17 @@ int GV_STUDIO::RUN()
         ImGui_ImplSDL3_NewFrame();
         ImGui::NewFrame();
 
-        // Minimal test window
-        ImGui::Begin("Init Check");
-        ImGui::Text("SDL + OpenGL + ImGui running.");
-        ImGui::End();
+        if (m_state.showStartupDialog)
+        {
+            ShowStartupDialog(m_state);
+        }
+        else
+        {
+            DrawDockspace();
+            DrawSceneExplorer();
+            DrawLogicUnitExplorer();
+            DrawResourceExplorer();
+        }
 
         ImGui::Render();
 
@@ -194,11 +200,14 @@ int GV_STUDIO::RUN()
 }
 
 
-// ------------------------------------------------------------
-// Stubs (Unimplemented Editor UI)
-// ------------------------------------------------------------
 
-void GV_STUDIO::ShowStartupDialog(GV_State) {}
+
+void GV_STUDIO::ShowStartupDialog(GV_State) 
+{
+    StartupDialog::Draw(m_state);
+}
+
+
 void GV_STUDIO::DrawDockspace() {}
 void GV_STUDIO::DrawSceneExplorer() {}
 void GV_STUDIO::DrawLogicUnitExplorer() {}

@@ -4,6 +4,8 @@
 int main(int argc, char** argv)
 {
 	GV_STUDIO gv_studio;
+
+
 	return gv_studio.RUN();
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)

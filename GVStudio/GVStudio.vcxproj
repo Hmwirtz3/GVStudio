@@ -151,7 +151,10 @@
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\MiniXml\MiniXml.cpp" />
     <ClCompile Include="src\MiniXml\ObjectXml.cpp" />
+    <ClCompile Include="src\MiniXml\ProjectXml.cpp" />
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
+    <ClCompile Include="src\Platform\WindowsFileDialog.cpp" />
+    <ClCompile Include="src\Viewports\StartupDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Database\AssetDatabase.h" />
@@ -193,7 +196,10 @@
     <ClInclude Include="include\imgui\imstb_truetype.h" />
     <ClInclude Include="include\MiniXml\MiniXml.h" />
     <ClInclude Include="include\MiniXml\ObjectXml.h" />
+    <ClInclude Include="include\MiniXml\ProjectXml.h" />
     <ClInclude Include="include\MiniXml\SceneXml.h" />
+    <ClInclude Include="include\Platform\WindowsFileDialog.h" />
+    <ClInclude Include="include\Viewports\StartupDialog.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

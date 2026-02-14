@@ -16,6 +16,13 @@ enum class EditorMode
     OpenRecent
 };
 
+struct GV_Scene_Info
+{
+    std::string scenePath;
+    std::string sceneName;
+};
+
+
 struct GV_Project_Info
 {
     std::string projectPath;
@@ -23,13 +30,13 @@ struct GV_Project_Info
     std::string dataFolder;
     std::string resourceFolder;
     std::string sourceFolder;
+
+    int projectVersion = 1;
+
+    std::vector<GV_Scene_Info> scenes;
+    std::string startupScene;
 };
 
-struct GV_Scene_Info
-{
-    std::string scenePath;
-    std::string sceneName;
-};
 
 struct GV_State
 {
@@ -37,7 +44,7 @@ struct GV_State
 
     GV_Project_Info project;
     GV_Scene_Info currentScene;
-    std::vector<GV_Scene_Info> availableScenes;
+    
 
     bool showStartupDialog = true;
     bool quitRequested = false;

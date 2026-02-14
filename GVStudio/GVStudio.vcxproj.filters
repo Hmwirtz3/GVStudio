@@ -76,6 +76,12 @@
     <Filter Include="Source Files\Database">
       <UniqueIdentifier>{cd516946-9035-4d5b-9034-ce0b3f60ad28}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Platform">
+      <UniqueIdentifier>{9b18f2c5-4fe5-45ed-94d6-dccddf1ac586}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Platform">
+      <UniqueIdentifier>{116bd306-9371-48d2-8459-2a091db56c7a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -131,6 +137,15 @@
     </ClCompile>
     <ClCompile Include="src\Database\LogicUnitRegistry.cpp">
       <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MiniXml\ProjectXml.cpp">
+      <Filter>Source Files\MiniXml</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\StartupDialog.cpp">
+      <Filter>Source Files\Viewports</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Platform\WindowsFileDialog.cpp">
+      <Filter>Source Files\Platform</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -253,6 +268,15 @@
     </ClInclude>
     <ClInclude Include="include\Database\LogicUnitRegistry.h">
       <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MiniXml\ProjectXml.h">
+      <Filter>Header Files\MiniXml</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\StartupDialog.h">
+      <Filter>Header Files\Viewports</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Platform\WindowsFileDialog.h">
+      <Filter>Header Files\Platform</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
