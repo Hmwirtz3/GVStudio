@@ -10,12 +10,18 @@
 class LogicUnitRegistry
 {
 public:
+
+	void ParseFile(const std::string& filePath);
+	void ParseFolder(const std::string& folderPath);
 	void Clear();
 
 	void Register(const GV_Logic_Unit& unit);
 	void Register(GV_Logic_Unit&& unit);
 
 	const GV_Logic_Unit* Find(const std::string& typeName) const;
+
+	const std::vector<GV_Logic_Unit>& GetAll() const;
+
 
 	
 private: 

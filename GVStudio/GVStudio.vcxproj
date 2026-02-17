@@ -136,6 +136,7 @@
   <ItemGroup>
     <ClCompile Include="src\Database\AssetDatabase.cpp" />
     <ClCompile Include="src\Database\LogicUnitRegistry.cpp" />
+    <ClCompile Include="src\Database\ResourceDatabase.cpp" />
     <ClCompile Include="src\GVFramework\LogicUnit\LogicUnitParser.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneManager.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp" />
@@ -159,6 +160,7 @@
   <ItemGroup>
     <ClInclude Include="include\Database\AssetDatabase.h" />
     <ClInclude Include="include\Database\LogicUnitRegistry.h" />
+    <ClInclude Include="include\Database\ResourceDatabase.h" />
     <ClInclude Include="include\GVFramework\Chunk\Chunk.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitMacros.h" />

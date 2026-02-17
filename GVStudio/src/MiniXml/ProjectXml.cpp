@@ -2,192 +2,221 @@
 #include "MiniXml/MiniXml.h"
 
 #include <iostream>
+#include <filesystem>
+
+namespace fs = std::filesystem;
 
 namespace
 {
-	const XmlAttribute* FindAttr(const XmlNode& node, const std::string& name)
-	{
-		for (const XmlAttribute& a : node.attributes)
-		{
-			if (a.name == name)
-				return &a;
-			
-		}
-		return nullptr;
-	}
+    const XmlAttribute* FindAttr(const XmlNode& node, const std::string& name)
+    {
+        for (const XmlAttribute& a : node.attributes)
+        {
+            if (a.name == name)
+                return &a;
+        }
+        return nullptr;
+    }
 
+    std::string GetFileNameFromPath(const std::string& path)
+    {
+        size_t slash = path.find_last_of("\\/");
+        if (slash == std::string::npos)
+            return path;
 
-	std::string GetFileNameFromPath(const std::string& path)
-	{
-		size_t slash = path.find_last_of("\//");
-
-		if (slash == std::string::npos)
-		{
-			return path;
-		}
-
-		return path.substr(slash + 1);
-
-	}
+        return path.substr(slash + 1);
+    }
 }
-
-
-
 
 bool ProjectXml::LoadProjectFromXml(GV_Project_Info& project, const std::string& xmlPath)
 {
-	XmlNode root;
+    std::cout << "\n[ProjectXml] Loading project: " << xmlPath << "\n";
 
-	if (!XmlLoadFromFile(xmlPath, root))
-	{
-		std::cout << "Failed to load project file: " << xmlPath << "\n";
-		return false;
-	}
-	
+    XmlNode root;
 
-	if (root.name != "Project")
-	{
-		std::cout << "Invalid project file format. \n";
-			return false;
-	}
+    if (!XmlLoadFromFile(xmlPath, root))
+    {
+        std::cout << "[ProjectXml] Failed to load XML file.\n";
+        return false;
+    }
 
-	project = GV_Project_Info();
-	project.projectPath = xmlPath;
+    if (root.name != "Project")
+    {
+        std::cout << "[ProjectXml] Invalid root node: " << root.name << "\n";
+        return false;
+    }
 
-	for (const XmlNode& child : root.children)
-	{
-		if (child.name == "Name")
-		{
-			project.projectName == child.text;
+    project = GV_Project_Info();
+    project.projectPath = xmlPath;
 
-		}
-		else if (child.name == "Paths")
-		{
-			for (const XmlNode& pathNode : child.children)
-			{
-				if (pathNode.name == "DataFolder")
-				{
-					project.dataFolder == pathNode.text;
-				}
-				else if (pathNode.name == "ResourceFolder")
-				{
-					project.resourceFolder == pathNode.text;
-				}
-				else if (pathNode.name == "SourceFolder")
-				{
-					project.sourceFolder == pathNode.text;
-				}
-			}
+    project.projectRoot =
+        fs::path(xmlPath).parent_path().string();
 
-		}
 
-		else if (child.name == "Scenes")
-		{
-			for (const XmlNode& sceneNode : child.children)
-			{
-				if (sceneNode.name == "Scene")
-				{
-					const XmlAttribute* pathAttr = FindAttr(sceneNode, "path");
+    for (const XmlNode& child : root.children)
+    {
+        if (child.name == "Name")
+        {
+            project.projectName = child.text;
+            std::cout << "[ProjectXml] Project Name: "
+                << project.projectName << "\n";
+        }
+        else if (child.name == "Paths")
+        {
+            std::cout << "[ProjectXml] Reading Paths...\n";
 
-					if (pathAttr)
-					{
-						GV_Scene_Info scene;
-						scene.scenePath = pathAttr->value;
-						scene.sceneName = GetFileNameFromPath(scene.scenePath);
+            for (const XmlNode& pathNode : child.children)
+            {
+                if (pathNode.name == "DataFolder")
+                {
+                    project.dataFolder = pathNode.text;
+                    std::cout << "  DataFolder: "
+                        << project.dataFolder << "\n";
+                }
+                else if (pathNode.name == "ResourceFolder")
+                {
+                    project.resourceFolder = pathNode.text;
+                    std::cout << "  ResourceFolder: "
+                        << project.resourceFolder << "\n";
+                }
+                else if (pathNode.name == "SourceFolder")
+                {
+                    project.sourceFolder = pathNode.text;
+                    std::cout << "  SourceFolder: "
+                        << project.sourceFolder << "\n";
+                }
+            }
+        }
+        else if (child.name == "Scenes")
+        {
+            std::cout << "[ProjectXml] Reading Scenes...\n";
 
-						project.scenes.push_back(scene);
-					}
-				}
-			}
-		}
-		else if (child.name == "StartupScene")
-		{
-			project.startupScene = child.text;
-		}
-	}
-	return true;
+            for (const XmlNode& sceneNode : child.children)
+            {
+                if (sceneNode.name == "Scene")
+                {
+                    const XmlAttribute* pathAttr =
+                        FindAttr(sceneNode, "path");
+
+                    if (pathAttr)
+                    {
+                        GV_Scene_Info scene;
+                        scene.scenePath = pathAttr->value;
+                        scene.sceneName =
+                            GetFileNameFromPath(scene.scenePath);
+
+                        project.scenes.push_back(scene);
+
+                        std::cout << "  Scene Loaded:\n";
+                        std::cout << "    Path: "
+                            << scene.scenePath << "\n";
+                        std::cout << "    Name: "
+                            << scene.sceneName << "\n";
+                    }
+                }
+            }
+        }
+        else if (child.name == "StartupScene")
+        {
+            project.startupScene = child.text;
+            std::cout << "[ProjectXml] StartupScene: "
+                << project.startupScene << "\n";
+        }
+    }
+
+    std::cout << "[ProjectXml] Total Scenes: "
+        << project.scenes.size() << "\n";
+
+    std::cout << "[ProjectXml] Project load complete.\n\n";
+
+    return true;
 }
 
-
-
-
-bool ProjectXml::SaveProjectToXml(const GV_Project_Info& project,  const std::string& xmlPath)
+bool ProjectXml::SaveProjectToXml(
+    const GV_Project_Info& project,
+    const std::string& xmlPath)
 {
-	XmlNode root;
-	root.name = "Project";
+    std::cout << "\n[ProjectXml] Saving project: "
+        << xmlPath << "\n";
 
-	
-	XmlAttribute versionAttr;
-	versionAttr.name = "version";
-	versionAttr.value = "1";
-	root.attributes.push_back(versionAttr);
+    XmlNode root;
+    root.name = "Project";
 
-	
-	{
-		XmlNode nameNode;
-		nameNode.name = "Name";
-		nameNode.text = project.projectName;
-		root.children.push_back(nameNode);
-	}
+    XmlAttribute versionAttr;
+    versionAttr.name = "version";
+    versionAttr.value = "1";
+    root.attributes.push_back(versionAttr);
 
+    {
+        XmlNode nameNode;
+        nameNode.name = "Name";
+        nameNode.text = project.projectName;
+        root.children.push_back(nameNode);
+    }
 
-	{
-		XmlNode pathsNode;
-		pathsNode.name = "Paths";
+    {
+        XmlNode pathsNode;
+        pathsNode.name = "Paths";
 
-		XmlNode dataNode;
-		dataNode.name = "DataFolder";
-		dataNode.text = project.dataFolder;
-		pathsNode.children.push_back(dataNode);
+        XmlNode dataNode;
+        dataNode.name = "DataFolder";
+        dataNode.text = project.dataFolder;
+        pathsNode.children.push_back(dataNode);
 
-		XmlNode resourceNode;
-		resourceNode.name = "ResourceFolder";
-		resourceNode.text = project.resourceFolder;
-		pathsNode.children.push_back(resourceNode);
+        XmlNode resourceNode;
+        resourceNode.name = "ResourceFolder";
+        resourceNode.text = project.resourceFolder;
+        pathsNode.children.push_back(resourceNode);
 
-		XmlNode sourceNode;
-		sourceNode.name = "SourceFolder";
-		sourceNode.text = project.sourceFolder;
-		pathsNode.children.push_back(sourceNode);
+        XmlNode sourceNode;
+        sourceNode.name = "SourceFolder";
+        sourceNode.text = project.sourceFolder;
+        pathsNode.children.push_back(sourceNode);
 
-		root.children.push_back(pathsNode);
-	}
+        root.children.push_back(pathsNode);
+    }
 
+    {
+        XmlNode scenesNode;
+        scenesNode.name = "Scenes";
 
-	{
-		XmlNode scenesNode;
-		scenesNode.name = "Scenes";
+        for (const GV_Scene_Info& scene : project.scenes)
+        {
+            XmlNode sceneNode;
+            sceneNode.name = "Scene";
 
-		for (const GV_Scene_Info& scene : project.scenes)
-		{
-			XmlNode sceneNode;
-			sceneNode.name = "Scene";
+            XmlAttribute pathAttr;
+            pathAttr.name = "path";
+            pathAttr.value = scene.scenePath;
 
-			XmlAttribute pathAttr;
-			pathAttr.name = "path";
-			pathAttr.value = scene.scenePath;
+            sceneNode.attributes.push_back(pathAttr);
+            scenesNode.children.push_back(sceneNode);
 
-			sceneNode.attributes.push_back(pathAttr);
-			scenesNode.children.push_back(sceneNode);
-		}
+            std::cout << "  Saving Scene:\n";
+            std::cout << "    Path: "
+                << scene.scenePath << "\n";
+        }
 
-		root.children.push_back(scenesNode);
-	}
+        root.children.push_back(scenesNode);
+    }
 
-	
-	{
-		XmlNode startupNode;
-		startupNode.name = "StartupScene";
-		startupNode.text = project.startupScene;
-		root.children.push_back(startupNode);
-	}
+    {
+        XmlNode startupNode;
+        startupNode.name = "StartupScene";
+        startupNode.text = project.startupScene;
+        root.children.push_back(startupNode);
 
-	if (!XmlSaveToFile(xmlPath, root))
-	{
-		std::cout << "Failed to save project file: " << xmlPath << "\n";
-		return false;
-	}
+        std::cout << "  StartupScene: "
+            << project.startupScene << "\n";
+    }
 
-	return true;
+    if (!XmlSaveToFile(xmlPath, root))
+    {
+        std::cout << "[ProjectXml] Failed to save project file.\n";
+        return false;
+    }
+
+    std::cout << "[ProjectXml] Project saved successfully.\n\n";
+
+    return true;
 }
-

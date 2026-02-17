@@ -1,5 +1,3 @@
-
-
 #include "GVFramework/LogicUnit/LogicUnitParser.h"
 #include "GVFramework/Chunk/Chunk.h"
 
@@ -17,7 +15,7 @@ static GV_ChunkType ParseChunkType(const std::string& s)
     if (s == "GV_CHUNK_HEIGHTMAP")
         return GV_ChunkType::GV_CHUNK_HEIGHTMAP;
 
-    if (s == " GV_CHUNK_STATIC_MESH")
+    if (s == "GV_CHUNK_STATIC_MESH")
         return GV_ChunkType::GV_CHUNK_STATIC_MESH;
 
     return GV_ChunkType::GV_CHUNK_UNKNOWN;
@@ -45,6 +43,8 @@ std::string LogicUnitParser::StripQuotes(const std::string& s)
 std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filename)
 {
     std::vector<GV_Logic_Unit> units;
+
+    std::cout << "\n[Parser] Parsing file: " << filename << "\n";
 
     std::ifstream file(filename);
     if (!file.is_open())
@@ -79,6 +79,10 @@ std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filenam
         unit.typeName = unitName;
         unit.chunkType = ParseChunkType(chunkStr);
 
+        std::cout << "--------------------------------------\n";
+        std::cout << "[Parser] Found Logic Unit: " << unit.typeName << "\n";
+        std::cout << "[Parser] Chunk Type: " << chunkStr << "\n";
+
         const size_t bodyStart = nameEnd + 1;
         const size_t bodyEnd = content.find("END_LOGIC_UNIT", bodyStart);
         if (bodyEnd == std::string::npos)
@@ -111,6 +115,8 @@ std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filenam
                     ? line.substr(q1 + 1, q2 - q1 - 1)
                     : "";
                 def.hint = "";
+
+                std::cout << "  [Param] Separator: " << def.defaultValue << "\n";
 
                 unit.params.push_back(def);
                 macroPos = end + 1;
@@ -165,13 +171,22 @@ std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filenam
                 continue;
             }
 
+            std::cout << "  [Param] Name: " << def.name
+                << " | Type: " << static_cast<int>(def.type)
+                << " | Default: " << def.defaultValue
+                << " | Hint: " << def.hint << "\n";
+
             unit.params.push_back(def);
             macroPos = end + 1;
         }
 
+        std::cout << "[Parser] Total Params: " << unit.params.size() << "\n";
+
         units.push_back(unit);
         pos = bodyEnd + strlen("END_LOGIC_UNIT");
     }
+
+    std::cout << "[Parser] Units Parsed From File: " << units.size() << "\n";
 
     return units;
 }

@@ -1,7 +1,6 @@
 #include "GVStudio/GVStudio.h"
 #include "Viewports/StartupDialog.h"
 
-
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_opengl.h"
 
@@ -11,7 +10,11 @@
 
 #include <GL/gl.h>
 
+#include <filesystem>
+#include <iostream>
+#include <string>
 
+namespace fs = std::filesystem;
 
 GV_STUDIO::GV_STUDIO()
     : m_state(),
@@ -33,15 +36,11 @@ GV_STUDIO::GV_STUDIO()
     m_isInit = true;
 }
 
-
-
 GV_STUDIO::~GV_STUDIO()
 {
     ShutdownImgui();
     ShutdownSDLAndGL();
 }
-
-
 
 bool GV_STUDIO::InitSDLAndGL()
 {
@@ -51,9 +50,6 @@ bool GV_STUDIO::InitSDLAndGL()
         return false;
     }
 
-
-
-    
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
@@ -66,15 +62,13 @@ bool GV_STUDIO::InitSDLAndGL()
         "Gravitas Studio",
         1600,
         900,
-        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-    );
+        SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     if (!m_window)
     {
         printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
         return false;
     }
-
 
     m_glContext = SDL_GL_CreateContext(m_window);
 
@@ -84,7 +78,6 @@ bool GV_STUDIO::InitSDLAndGL()
         return false;
     }
 
-
     if (!SDL_GL_MakeCurrent(m_window, m_glContext))
         return false;
 
@@ -92,8 +85,6 @@ bool GV_STUDIO::InitSDLAndGL()
 
     return true;
 }
-
-
 
 bool GV_STUDIO::InitImGui()
 {
@@ -112,9 +103,6 @@ bool GV_STUDIO::InitImGui()
     return true;
 }
 
-
-
-
 void GV_STUDIO::ShutdownImgui()
 {
     if (!m_imguiInit)
@@ -126,7 +114,6 @@ void GV_STUDIO::ShutdownImgui()
 
     m_imguiInit = false;
 }
-
 
 void GV_STUDIO::ShutdownSDLAndGL()
 {
@@ -145,8 +132,65 @@ void GV_STUDIO::ShutdownSDLAndGL()
     SDL_Quit();
 }
 
+void GV_STUDIO::DebugPrintProjectInfo() const
+{
+    const GV_Project_Info& project = m_state.project;
 
+    std::cout << "\n=====================================\n";
+    std::cout << "[GV_STUDIO] Project Debug Dump\n";
+    std::cout << "-------------------------------------\n";
 
+    std::cout << "Project Name:   " << project.projectName << "\n";
+    std::cout << "Project Path:   " << project.projectPath << "\n";
+    std::cout << "Project Root:   " << project.projectRoot << "\n";
+
+    std::cout << "\nFolders:\n";
+    std::cout << "  DataFolder:      " << project.dataFolder << "\n";
+    std::cout << "  ResourceFolder:  " << project.resourceFolder << "\n";
+    std::cout << "  SourceFolder:    " << project.sourceFolder << "\n";
+
+    std::cout << "\nScenes (" << project.scenes.size() << "):\n";
+
+    for (size_t i = 0; i < project.scenes.size(); ++i)
+    {
+        const GV_Scene_Info& scene = project.scenes[i];
+
+        std::cout << "  Scene " << i << "\n";
+        std::cout << "    Name: " << scene.sceneName << "\n";
+        std::cout << "    Path: " << scene.scenePath << "\n";
+    }
+
+    std::cout << "\nStartup Scene: " << project.startupScene << "\n";
+
+    std::cout << "=====================================\n\n";
+}
+
+void GV_STUDIO::InitProject()
+{
+    fs::path root = fs::path(m_state.project.projectPath).parent_path();
+    fs::path fullSource = root / m_state.project.sourceFolder;
+
+    std::cout << "[GV_STUDIO] InitProject\n";
+    std::cout << "  ProjectRoot:  " << root.string() << "\n";
+    std::cout << "  SourcePath:   " << fullSource.string() << "\n";
+
+    m_logicRegistry.Clear();
+    m_logicRegistry.ParseFolder(fullSource.string());
+
+    fs::path fullResources = root / m_state.project.resourceFolder;
+    std::cout << "  ResourcePath: " << fullResources.string() << "\n";
+
+    m_resourceDatabase.BuildFolderTree(fullResources.string());
+
+    fs::path fullScenePath = root / m_state.currentScene.scenePath;
+    std::cout << "  ScenePath:    " << fullScenePath.string() << "\n";
+
+    m_sceneManager.LoadScene(fullScenePath.string());
+
+    m_selectedObject = nullptr;
+
+    DebugPrintProjectInfo();
+}
 
 int GV_STUDIO::RUN()
 {
@@ -173,12 +217,28 @@ int GV_STUDIO::RUN()
         if (m_state.showStartupDialog)
         {
             ShowStartupDialog(m_state);
+
+            if (!m_state.showStartupDialog &&
+                m_state.mode == EditorMode::ProjectOpen &&
+                !m_projectInitialized)
+            {
+                std::cout << "[GV_STUDIO] Project opened. Initializing...\n";
+                InitProject();
+                m_projectInitialized = true;
+            }
         }
         else
         {
+            if (m_state.mode == EditorMode::ProjectOpen && !m_projectInitialized)
+            {
+                std::cout << "[GV_STUDIO] Project open state detected. Initializing...\n";
+                InitProject();
+                m_projectInitialized = true;
+            }
+
             DrawDockspace();
             DrawSceneExplorer();
-            DrawLogicUnitExplorer();
+            DrawLogicUnitInspector();
             DrawResourceExplorer();
         }
 
@@ -199,16 +259,366 @@ int GV_STUDIO::RUN()
     return 0;
 }
 
-
-
-
-void GV_STUDIO::ShowStartupDialog(GV_State) 
+void GV_STUDIO::ShowStartupDialog(GV_State)
 {
     StartupDialog::Draw(m_state);
 }
 
+void GV_STUDIO::DrawSceneFolderRecursive(SceneFolder& folder)
+{
+    ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
 
-void GV_STUDIO::DrawDockspace() {}
-void GV_STUDIO::DrawSceneExplorer() {}
-void GV_STUDIO::DrawLogicUnitExplorer() {}
-void GV_STUDIO::DrawResourceExplorer() {}
+    if (ImGui::TreeNodeEx(folder.name.c_str(), flags))
+    {
+        for (auto& objPtr : folder.objects)
+        {
+            SceneObject* obj = objPtr.get();
+            bool selected = (m_selectedObject == obj);
+
+            if (ImGui::Selectable(obj->name.c_str(), selected))
+            {
+                m_selectedObject = obj;
+            }
+        }
+
+        for (auto& childFolder : folder.children)
+            DrawSceneFolderRecursive(*childFolder);
+
+        ImGui::TreePop();
+    }
+}
+
+void GV_STUDIO::DrawDockspace()
+{
+}
+
+void GV_STUDIO::DrawSceneExplorer()
+{
+    if (!m_showSceneExplorer)
+        return;
+
+    ImGui::Begin("Scene Explorer", &m_showSceneExplorer);
+
+    ImGui::Text("Scenes");
+    ImGui::Separator();
+
+    for (const auto& scene : m_state.project.scenes)
+    {
+        bool isSelected =
+            (scene.scenePath == m_state.currentScene.scenePath);
+
+        if (ImGui::Selectable(scene.sceneName.c_str(), isSelected))
+        {
+            if (!isSelected)
+            {
+                m_state.currentScene = scene;
+
+                std::cout << "[SceneExplorer] Switching Scene:\n";
+                std::cout << "  Name: " << scene.sceneName << "\n";
+                std::cout << "  Path: " << scene.scenePath << "\n";
+
+                fs::path projectRoot =
+                    fs::path(m_state.project.projectPath).parent_path();
+
+                fs::path fullScenePath =
+                    projectRoot / scene.scenePath;
+
+                m_sceneManager.LoadScene(fullScenePath.string());
+
+                m_selectedObject = nullptr;
+            }
+        }
+    }
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::Text("Objects");
+    ImGui::Separator();
+
+    DrawSceneFolderRecursive(m_rootFolder);
+
+    if (ImGui::BeginDragDropTarget())
+    {
+        if (const ImGuiPayload* payload = ImGui::AcceptDragDropPayload("LOGIC_UNIT"))
+        {
+            const char* typeName = (const char*)payload->Data;
+
+            std::cout << "[SceneExplorer] Dropped LogicUnit: " << typeName << "\n";
+
+            SceneObject* obj = CreateObjectFromLogicUnit(typeName);
+            if (obj)
+            {
+                m_selectedObject = obj;
+                std::cout << "[SceneExplorer] Created object and selected it: " << obj->name << "\n";
+            }
+            else
+            {
+                std::cout << "[SceneExplorer] Failed to create object from LogicUnit.\n";
+            }
+        }
+
+        ImGui::EndDragDropTarget();
+    }
+
+    ImGui::End();
+}
+
+void GV_STUDIO::DrawLogicUnitInspector()
+{
+    if (!m_showLogicUnitInspector)
+        return;
+
+    ImGui::Begin("Logic Unit Editor", &m_showLogicUnitInspector);
+
+    if (!m_selectedObject)
+    {
+        ImGui::Text("No object selected.");
+        ImGui::End();
+        return;
+    }
+
+    if (!m_selectedObject->def || !m_selectedObject->def->def)
+    {
+        ImGui::Text("No Logic Unit attached.");
+        ImGui::End();
+        return;
+    }
+
+    GV_Logic_Unit_Instance& inst = *m_selectedObject->def;
+    GV_Logic_Unit& def = *inst.def;
+
+    ImGui::Text("Type: %s", def.typeName.c_str());
+    ImGui::Separator();
+
+    for (size_t i = 0; i < def.params.size(); i++)
+    {
+        const LU_Param_Def& paramDef = def.params[i];
+        LU_Param_Val& value = inst.values[i];
+
+        switch (paramDef.type)
+        {
+        case ParamType::Separator:
+            ImGui::SeparatorText(paramDef.defaultValue.c_str());
+            break;
+
+        case ParamType::Float:
+            ImGui::DragFloat(paramDef.name.c_str(), &value.fval, 0.1f);
+            break;
+
+        case ParamType::Int:
+            ImGui::DragInt(paramDef.name.c_str(), &value.ival, 1);
+            break;
+
+        case ParamType::Bool:
+            ImGui::Checkbox(paramDef.name.c_str(), &value.bval);
+            break;
+
+        case ParamType::String:
+        case ParamType::Event:
+        case ParamType::Message:
+        {
+            char buffer[256];
+            buffer[0] = 0;
+            strncpy_s(buffer, value.sval.c_str(), sizeof(buffer) - 1);
+
+            if (ImGui::InputText(paramDef.name.c_str(), buffer, sizeof(buffer)))
+            {
+                value.sval = buffer;
+            }
+            break;
+        }
+
+        default:
+            break;
+        }
+
+        if (!paramDef.hint.empty() && ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", paramDef.hint.c_str());
+    }
+
+    ImGui::End();
+}
+
+void GV_STUDIO::DrawLogicUnitRegistry()
+{
+    ImGui::Text("Logic Units");
+    ImGui::Separator();
+
+    if (ImGui::Button("Refresh"))
+    {
+        std::cout << "\n[UI] Logic Unit Refresh Requested\n";
+
+        fs::path root = fs::path(m_state.project.projectPath).parent_path();
+        fs::path fullSource = root / m_state.project.sourceFolder;
+
+        std::cout << "[UI] Source Folder Resolved: " << fullSource.string() << "\n";
+
+        m_logicRegistry.Clear();
+        m_logicRegistry.ParseFolder(fullSource.string());
+
+        std::cout << "[UI] Refresh Complete\n";
+    }
+
+    ImGui::Spacing();
+
+    const auto& units = m_logicRegistry.GetAll();
+
+    for (const auto& unit : units)
+    {
+        ImGui::PushID(unit.typeName.c_str());
+
+        if (ImGui::Selectable(unit.typeName.c_str()))
+        {
+            std::cout << "[UI] Selected Logic Unit: " << unit.typeName << "\n";
+        }
+
+        if (ImGui::BeginDragDropSource())
+        {
+            ImGui::SetDragDropPayload(
+                "LOGIC_UNIT",
+                unit.typeName.c_str(),
+                unit.typeName.size() + 1);
+
+            ImGui::Text("%s", unit.typeName.c_str());
+            ImGui::EndDragDropSource();
+        }
+
+        ImGui::SameLine();
+        ImGui::TextDisabled("(%d params)", (int)unit.params.size());
+
+        ImGui::PopID();
+    }
+}
+
+void GV_STUDIO::DrawResourceFolderTree()
+{
+    const ResourceNode* root = m_resourceDatabase.GetRoot();
+    if (!root)
+        return;
+
+    ImGui::Text("Resource Folder");
+    ImGui::Separator();
+
+    for (const auto& child : root->children)
+        DrawResourceNode(child.get());
+}
+
+void GV_STUDIO::DrawResourceNode(const ResourceNode* node)
+{
+    if (!node)
+        return;
+
+    ImGui::PushID(node->fullPath.c_str());
+
+    if (node->isFolder)
+    {
+        ImGuiTreeNodeFlags flags =
+            ImGuiTreeNodeFlags_OpenOnArrow |
+            ImGuiTreeNodeFlags_SpanFullWidth;
+
+        bool open = ImGui::TreeNodeEx(node->name.c_str(), flags);
+
+        if (open)
+        {
+            for (const auto& child : node->children)
+                DrawResourceNode(child.get());
+
+            ImGui::TreePop();
+        }
+    }
+    else
+    {
+        ImGui::Selectable(node->name.c_str());
+
+        if (ImGui::BeginDragDropSource())
+        {
+            ImGui::SetDragDropPayload(
+                "RESOURCE_FILE",
+                node->fullPath.c_str(),
+                node->fullPath.size() + 1);
+
+            ImGui::Text("%s", node->name.c_str());
+            ImGui::EndDragDropSource();
+        }
+    }
+
+    ImGui::PopID();
+}
+
+void GV_STUDIO::DrawResourceExplorer()
+{
+    if (!m_showResourceExplorer)
+        return;
+
+    ImGui::Begin("Resource Explorer", &m_showResourceExplorer);
+
+    if (ImGui::BeginTabBar("ResourceTabs"))
+    {
+        if (ImGui::BeginTabItem("Logic Units"))
+        {
+            DrawLogicUnitRegistry();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Resources"))
+        {
+            DrawResourceFolderTree();
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
+
+    ImGui::End();
+}
+
+SceneObject* GV_STUDIO::CreateObjectFromLogicUnit(const std::string& typeName)
+{
+    const GV_Logic_Unit* def = m_logicRegistry.Find(typeName);
+    if (!def)
+        return nullptr;
+
+    auto obj = std::make_unique<SceneObject>();
+    obj->name = typeName;
+
+    obj->def = std::make_unique<GV_Logic_Unit_Instance>();
+    obj->def->def = const_cast<GV_Logic_Unit*>(def);
+    obj->def->values.resize(def->params.size());
+
+    for (size_t i = 0; i < def->params.size(); i++)
+    {
+        const LU_Param_Def& pDef = def->params[i];
+        LU_Param_Val& val = obj->def->values[i];
+
+        switch (pDef.type)
+        {
+        case ParamType::Float:
+            val.fval = pDef.defaultValue.empty() ? 0.0f : std::stof(pDef.defaultValue);
+            break;
+
+        case ParamType::Int:
+            val.ival = pDef.defaultValue.empty() ? 0 : std::stoi(pDef.defaultValue);
+            break;
+
+        case ParamType::Bool:
+            val.bval = (pDef.defaultValue == "true" || pDef.defaultValue == "1");
+            break;
+
+        case ParamType::String:
+        case ParamType::Event:
+        case ParamType::Message:
+            val.sval = pDef.defaultValue;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    SceneObject* ptr = obj.get();
+    m_rootFolder.objects.push_back(std::move(obj));
+
+    return ptr;
+}

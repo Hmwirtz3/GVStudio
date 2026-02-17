@@ -5,6 +5,7 @@
 
 #include "Database/AssetDatabase.h"
 #include "Database/LogicUnitRegistry.h"
+#include "Database/ResourceDatabase.h"
 #include "GVFramework/Scene/SceneManager.h"
 
 #include "SDL3/SDL.h"
@@ -25,6 +26,8 @@ struct GV_Scene_Info
 
 struct GV_Project_Info
 {
+    std::string projectRoot;
+
     std::string projectPath;
     std::string projectName;
     std::string dataFolder;
@@ -63,13 +66,16 @@ public:
 
 private:
 
-    // ---------- Core State ----------
+    
     GV_State m_state;
 
     
     SceneFolder m_rootFolder;
-    LogicUnitRegistry m_logicRegistry;
+    SceneFolder* m_selectedFolder = nullptr;
     SceneManager m_sceneManager;
+
+    LogicUnitRegistry m_logicRegistry;
+    ResourceDatabase m_resourceDatabase;
     AssetDatabase m_assetDataBase;
 
     SceneObject* m_selectedObject = nullptr;
@@ -83,18 +89,34 @@ private:
     SDL_GLContext m_glContext = nullptr;
     bool m_isInit = false;
     bool m_imguiInit = false;
+    bool m_projectInitialized;
 
 
 private:
     bool InitSDLAndGL();
+    void InitProject();
     bool InitImGui();
     void ShutdownImgui();
     void ShutdownSDLAndGL();
 
+    void DebugPrintProjectInfo() const;
+    
+
+
+
 private:
     void ShowStartupDialog(GV_State state);
+    void DrawLogicUnitRegistry();
+    void DrawResourceFolderTree();
+    void DrawResourceNode(const ResourceNode* node);
     void DrawDockspace();
     void DrawSceneExplorer();
-    void DrawLogicUnitExplorer();
+    void DrawSceneFolderRecursive(SceneFolder& folder);
+    void DrawLogicUnitInspector();
     void DrawResourceExplorer();
+
+private: 
+    
+    SceneObject* CreateObjectFromLogicUnit(const std::string& typeName);
+
 };
