@@ -71,7 +71,20 @@ private:
 
     
     SceneFolder m_rootFolder;
-    SceneFolder* m_selectedFolder = nullptr;
+    SceneFolder* m_selectedFolder = &m_rootFolder;
+   
+    SceneFolder* m_folderPendingDelete = nullptr;
+    SceneObject* m_objectPendingDelete = nullptr;
+
+    SceneFolder* m_folderRenaming = nullptr;
+    SceneObject* m_objectRenaming = nullptr;
+
+    SceneFolder* m_newFolderParent = nullptr;
+
+
+    char m_renameBuffer[256] = {};
+
+
     SceneManager m_sceneManager;
 
     LogicUnitRegistry m_logicRegistry;
@@ -117,6 +130,6 @@ private:
 
 private: 
     
-    SceneObject* CreateObjectFromLogicUnit(const std::string& typeName);
+    SceneObject* CreateObjectFromLogicUnit(const std::string& typeName, SceneFolder* targetFolder);
 
 };
