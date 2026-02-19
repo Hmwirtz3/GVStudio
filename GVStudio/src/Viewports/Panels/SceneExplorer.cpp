@@ -1,34 +1,40 @@
 #include "Viewports/Panels/SceneExplorer.h"
+#include "GVStudio/GVStudio.h"
+
 
 #include "imgui/imgui.h"
 
 #include <iostream>
 #include <filesystem>
 
-/* namespace fs = std::filesystem;
+namespace fs = std::filesystem;
 
-void SceneExplorer::SetVisible(bool visible) 
+void SceneExplorer::SetVisible(bool visible)
 {
-	m_isVisible = visible;
-
+    m_isVisible = visible;
 }
 
 bool SceneExplorer::IsVisible() const
 {
-	return m_isVisible;
+    return m_isVisible;
 }
 
-void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager sceneManager, LogicUnitRegistry& logicUnitRegistry)
+void SceneExplorer::DrawSceneFoldersRecursive(
+    SceneFolder& folder,
+    SceneManager& sceneManager,
+    SceneObject*& selectedObject,
+    SceneFolder*& selectedFolder)
 {
     ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow;
 
-    if (m_selectedFolder == &folder)
+    if (selectedFolder == &folder)
         flags |= ImGuiTreeNodeFlags_Selected;
 
     ImGui::PushID(&folder);
 
     bool open = ImGui::TreeNodeEx(folder.name.c_str(), flags);
 
+    // ===== Context Menu =====
     if (ImGui::BeginPopupContextItem())
     {
         if (ImGui::MenuItem("New Folder"))
@@ -43,12 +49,10 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
             strcpy_s(m_renameBuffer, folder.name.c_str());
         }
 
-        if (&folder != &m_rootFolder)
+        if (folder.parent != nullptr)
         {
             if (ImGui::MenuItem("Delete"))
-            {
                 m_folderPendingDelete = &folder;
-            }
         }
 
         ImGui::EndPopup();
@@ -56,10 +60,11 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
 
     if (ImGui::IsItemClicked())
     {
-        m_selectedFolder = &folder;
-        m_selectedObject = nullptr;
+        selectedFolder = &folder;
+        selectedObject = nullptr;
     }
 
+    // ===== Drag Drop =====
     if (ImGui::BeginDragDropTarget())
     {
         if (const ImGuiPayload* payload =
@@ -68,19 +73,21 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
             const char* typeName = (const char*)payload->Data;
 
             SceneObject* obj =
-                sceneManager.CreateObjectFromLogicUnit(typeName, &folder, logicUnitRegistry);
+                sceneManager.CreateObjectFromLogicUnit(typeName, &folder);
 
             if (obj)
-                m_selectedObject = obj;
+                selectedObject = obj;
         }
 
         ImGui::EndDragDropTarget();
     }
 
+    // ===== Folder Rename =====
     if (m_folderRenaming == &folder)
     {
         ImGui::SameLine();
-        if (ImGui::InputText("##RenameFolder",
+        if (ImGui::InputText(
+            "##RenameFolder",
             m_renameBuffer,
             sizeof(m_renameBuffer),
             ImGuiInputTextFlags_EnterReturnsTrue))
@@ -92,16 +99,18 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
 
     if (open)
     {
+        // ===== Objects =====
         for (auto it = folder.objects.begin(); it != folder.objects.end(); )
         {
             SceneObject* obj = it->get();
-            bool selected = (m_selectedObject == obj);
+            bool selected = (selectedObject == obj);
 
             ImGui::PushID(obj);
 
             if (m_objectRenaming == obj)
             {
-                if (ImGui::InputText("##RenameObject",
+                if (ImGui::InputText(
+                    "##RenameObject",
                     m_renameBuffer,
                     sizeof(m_renameBuffer),
                     ImGuiInputTextFlags_EnterReturnsTrue))
@@ -114,8 +123,8 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
             {
                 if (ImGui::Selectable(obj->name.c_str(), selected))
                 {
-                    m_selectedObject = obj;
-                    m_selectedFolder = &folder;
+                    selectedObject = obj;
+                    selectedFolder = &folder;
                 }
 
                 if (ImGui::BeginPopupContextItem())
@@ -128,9 +137,7 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
                     }
 
                     if (ImGui::MenuItem("Delete"))
-                    {
                         m_objectPendingDelete = obj;
-                    }
 
                     ImGui::EndPopup();
                 }
@@ -140,8 +147,8 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
 
             if (m_objectPendingDelete == obj)
             {
-                if (m_selectedObject == obj)
-                    m_selectedObject = nullptr;
+                if (selectedObject == obj)
+                    selectedObject = nullptr;
 
                 it = folder.objects.erase(it);
                 m_objectPendingDelete = nullptr;
@@ -151,16 +158,17 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
             ++it;
         }
 
+        // ===== Child Folders =====
         for (auto it = folder.children.begin(); it != folder.children.end(); )
         {
             SceneFolder* child = it->get();
 
             if (m_folderPendingDelete == child)
             {
-                if (m_selectedFolder == child)
+                if (selectedFolder == child)
                 {
-                    m_selectedFolder = &m_rootFolder;
-                    m_selectedObject = nullptr;
+                    selectedFolder = child->parent;
+                    selectedObject = nullptr;
                 }
 
                 it = folder.children.erase(it);
@@ -168,7 +176,12 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
                 continue;
             }
 
-            DrawSceneFoldersRecursive(*child, sceneManager, logicUnitRegistry);
+            DrawSceneFoldersRecursive(
+                *child,
+                sceneManager,
+                selectedObject,
+                selectedFolder);
+
             ++it;
         }
 
@@ -177,18 +190,24 @@ void SceneExplorer::DrawSceneFoldersRecursive(SceneFolder& folder, SceneManager 
 
     ImGui::PopID();
 
-    // ======= HANDLE NEW FOLDER CREATION =======
+    // ===== New Folder Creation =====
     if (m_newFolderParent == &folder)
     {
         auto newFolder = std::make_unique<SceneFolder>();
         newFolder->name = "New Folder";
+        newFolder->parent = &folder;
+
         folder.children.push_back(std::move(newFolder));
 
         m_newFolderParent = nullptr;
     }
 }
 
-void SceneExplorer::Draw(GV_State state, SceneManager sceneManager, LogicUnitRegistry& logicUnitRegistry)
+void SceneExplorer::Draw(
+    GV_State& state,
+    SceneManager& sceneManager,
+    SceneObject*& selectedObject,
+    SceneFolder*& selectedFolder)
 {
     if (!m_isVisible)
         return;
@@ -209,10 +228,6 @@ void SceneExplorer::Draw(GV_State state, SceneManager sceneManager, LogicUnitReg
             {
                 state.currentScene = scene;
 
-                std::cout << "[SceneExplorer] Switching Scene:\n";
-                std::cout << "  Name: " << scene.sceneName << "\n";
-                std::cout << "  Path: " << scene.scenePath << "\n";
-
                 fs::path projectRoot =
                     fs::path(state.project.projectPath).parent_path();
 
@@ -221,8 +236,8 @@ void SceneExplorer::Draw(GV_State state, SceneManager sceneManager, LogicUnitReg
 
                 sceneManager.LoadScene(fullScenePath.string());
 
-                m_selectedObject = nullptr;
-                m_selectedFolder = &m_rootFolder;
+                selectedObject = nullptr;
+                selectedFolder = &sceneManager.GetRootFolder();
 
                 m_folderPendingDelete = nullptr;
                 m_objectPendingDelete = nullptr;
@@ -240,9 +255,11 @@ void SceneExplorer::Draw(GV_State state, SceneManager sceneManager, LogicUnitReg
     ImGui::Text("Objects");
     ImGui::Separator();
 
-    DrawSceneFoldersRecursive(m_rootFolder, sceneManager, logicUnitRegistry);
+    DrawSceneFoldersRecursive(
+        sceneManager.GetRootFolder(),
+        sceneManager,
+        selectedObject,
+        selectedFolder);
 
     ImGui::End();
 }
-
-*/

@@ -21,7 +21,7 @@ GV_STUDIO::GV_STUDIO()
     : m_state(),
     m_rootFolder(),
     m_logicUnitRegistry(),
-    m_sceneManager(m_rootFolder, m_logicUnitRegistry),
+    m_sceneManager(m_logicUnitRegistry),
     m_assetDataBase(),
     m_logicUnitInspector(),
     m_selectedObject(nullptr),
@@ -254,7 +254,7 @@ int GV_STUDIO::RUN()
             }
 
             DrawDockspace();
-            DrawSceneExplorer();
+            m_sceneExplorer.Draw(m_state, m_sceneManager, m_selectedObject, m_selectedFolder);
             m_logicUnitInspector.Draw(m_selectedObject);
             DrawResourceExplorer();
         }

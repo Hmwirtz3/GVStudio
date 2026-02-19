@@ -93,7 +93,7 @@ private:
 
     SceneManager m_sceneManager;
 
-    //SceneExplorer m_sceneExplorer;
+    SceneExplorer m_sceneExplorer;
 
     LogicUnitRegistry m_logicUnitRegistry;
 

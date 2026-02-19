@@ -1,9 +1,6 @@
 #pragma once
 
-
-
 #include <string>
-#include <vector>
 #include <memory>
 
 #include "GVFramework/Scene/SceneObject.h"
@@ -23,21 +20,25 @@ struct SceneFolder
 class SceneManager
 {
 public:
-    
-    SceneManager(SceneFolder& root, LogicUnitRegistry& registry);
+    explicit SceneManager(LogicUnitRegistry& registry);
+
+    SceneFolder& GetRootFolder();
+    const SceneFolder& GetRootFolder() const;
 
     std::string GetCurrentSceneDirectory(const GV_State& state) const;
-    SceneObject* CreateObjectFromLogicUnit(const std::string& typeName, SceneFolder* targetFolder, LogicUnitRegistry& logicUnitRegistry);
 
     bool LoadScene(const std::string& sceneDir);
-    bool SaveScene(const std::string& sceneDir);
+    bool SaveScene(const std::string& sceneDir) const;
+
+    SceneObject* CreateObjectFromLogicUnit(
+        const std::string& typeName,
+        SceneFolder* targetFolder);
 
 private:
-    SceneFolder& m_root;
-    LogicUnitRegistry& m_registry;
-
-    
-
     void LoadAllObjects(SceneFolder& folder, const std::string& objectsDir);
     void SaveAllObjects(const SceneFolder& folder, const std::string& objectsDir) const;
+
+private:
+    SceneFolder m_root;
+    LogicUnitRegistry& m_registry;
 };

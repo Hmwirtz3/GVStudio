@@ -1,39 +1,45 @@
-#include "GVStudio/GVStudio.h"
-#include "MiniXml/MiniXml.h"
 #include "MiniXml/SceneXml.h"
 #include "MiniXml/ObjectXml.h"
 #include "GVFramework/Scene/SceneManager.h"
-#include "Database/LogicUnitRegistry.h"
+#include "GVStudio/GVStudio.h"
 
 #include <filesystem>
-#include <string>
-#include <vector>
 
 namespace fs = std::filesystem;
 
-SceneManager::SceneManager(SceneFolder& root, LogicUnitRegistry& registry)
-    : m_root(root), m_registry(registry)
+SceneManager::SceneManager(LogicUnitRegistry& registry)
+    : m_registry(registry)
 {
 }
 
-std::string SceneManager::GetCurrentSceneDirectory(const GV_State& g_state) const
+SceneFolder& SceneManager::GetRootFolder()
 {
-    if (g_state.currentScene.scenePath.empty())
+    return m_root;
+}
+
+const SceneFolder& SceneManager::GetRootFolder() const
+{
+    return m_root;
+}
+
+std::string SceneManager::GetCurrentSceneDirectory(const GV_State& state) const
+{
+    if (state.currentScene.scenePath.empty())
         return {};
 
-    fs::path scenePath(g_state.currentScene.scenePath);
+    fs::path scenePath(state.currentScene.scenePath);
     return scenePath.parent_path().string();
 }
 
 bool SceneManager::LoadScene(const std::string& sceneDir)
 {
+    m_root = SceneFolder{}; // reset root
+
     fs::path sceneFile = fs::path(sceneDir) /
         (fs::path(sceneDir).filename().string() + ".gScene");
 
     if (!SceneXml::LoadGScene(sceneFile.string(), m_root))
-    {
         return false;
-    }
 
     fs::path objectsDir = fs::path(sceneDir) / "Objects";
 
@@ -42,7 +48,8 @@ bool SceneManager::LoadScene(const std::string& sceneDir)
     return true;
 }
 
-void SceneManager::LoadAllObjects(SceneFolder& folder, const std::string& objectsDir)
+void SceneManager::LoadAllObjects(SceneFolder& folder,
+    const std::string& objectsDir)
 {
     for (auto& objPtr : folder.objects)
     {
@@ -54,13 +61,13 @@ void SceneManager::LoadAllObjects(SceneFolder& folder, const std::string& object
         ObjectXml::LoadObjectFromXml(obj, xmlPath.string(), m_registry);
     }
 
-    for (auto& c : folder.children)
+    for (auto& child : folder.children)
     {
-        LoadAllObjects(*c, objectsDir);
+        LoadAllObjects(*child, objectsDir);
     }
 }
 
-bool SceneManager::SaveScene(const std::string& sceneDir)
+bool SceneManager::SaveScene(const std::string& sceneDir) const
 {
     fs::path objectsDir = fs::path(sceneDir) / "Objects";
 
@@ -88,15 +95,20 @@ void SceneManager::SaveAllObjects(const SceneFolder& folder,
         ObjectXml::SaveObjectToXml(obj, xmlPath.string(), m_registry);
     }
 
-    for (const auto& c : folder.children)
+    for (const auto& child : folder.children)
     {
-        SaveAllObjects(*c, objectsDir);
+        SaveAllObjects(*child, objectsDir);
     }
 }
 
-SceneObject* SceneManager::CreateObjectFromLogicUnit(const std::string& typeName, SceneFolder* targetFolder, LogicUnitRegistry& logicUnitRegistry)
+SceneObject* SceneManager::CreateObjectFromLogicUnit(
+    const std::string& typeName,
+    SceneFolder* targetFolder)
 {
-    const GV_Logic_Unit* def = logicUnitRegistry.Find(typeName);
+    if (!targetFolder)
+        return nullptr;
+
+    const GV_Logic_Unit* def = m_registry.Find(typeName);
     if (!def)
         return nullptr;
 
@@ -107,7 +119,7 @@ SceneObject* SceneManager::CreateObjectFromLogicUnit(const std::string& typeName
     obj->def->def = const_cast<GV_Logic_Unit*>(def);
     obj->def->values.resize(def->params.size());
 
-    for (size_t i = 0; i < def->params.size(); i++)
+    for (size_t i = 0; i < def->params.size(); ++i)
     {
         const LU_Param_Def& pDef = def->params[i];
         LU_Param_Val& val = obj->def->values[i];
