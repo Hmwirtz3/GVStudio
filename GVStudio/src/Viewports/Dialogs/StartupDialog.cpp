@@ -1,4 +1,4 @@
-#include "Viewports/StartupDialog.h"
+#include "Viewports//Dialogs/StartupDialog.h"
 #include "Platform/WindowsFileDialog.h"
 #include "MiniXml/ProjectXml.h"
 #include "MiniXml/SceneXml.h"

@@ -8,6 +8,9 @@
 #include "Database/ResourceDatabase.h"
 #include "GVFramework/Scene/SceneManager.h"
 
+#include "Viewports/Panels/LogicUnitInspector.h"
+#include "Viewports/Panels/SceneExplorer.h"
+
 #include "SDL3/SDL.h"
 
 enum class EditorMode
@@ -84,18 +87,23 @@ private:
 
     char m_renameBuffer[256] = {};
 
+    bool m_showSceneExplorer = true;
+    bool m_showResourceExplorer = true;
+
 
     SceneManager m_sceneManager;
 
-    LogicUnitRegistry m_logicRegistry;
+    //SceneExplorer m_sceneExplorer;
+
+    LogicUnitRegistry m_logicUnitRegistry;
+
+    LogicUnitInspector m_logicUnitInspector;
+
     ResourceDatabase m_resourceDatabase;
+
     AssetDatabase m_assetDataBase;
 
     SceneObject* m_selectedObject = nullptr;
-
-    bool m_showSceneExplorer = true;
-    bool m_showLogicUnitInspector = true;
-    bool m_showResourceExplorer = true;
 
    
     SDL_Window* m_window = nullptr;
@@ -125,7 +133,6 @@ private:
     void DrawDockspace();
     void DrawSceneExplorer();
     void DrawSceneFolderRecursive(SceneFolder& folder);
-    void DrawLogicUnitInspector();
     void DrawResourceExplorer();
 
 private: 

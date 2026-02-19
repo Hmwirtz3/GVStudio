@@ -82,6 +82,24 @@
     <Filter Include="Header Files\Platform">
       <UniqueIdentifier>{116bd306-9371-48d2-8459-2a091db56c7a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Viewports\Dialogs">
+      <UniqueIdentifier>{b2d2b11a-7883-4369-8eb8-47a5625b07d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Viewports\Panels">
+      <UniqueIdentifier>{19e1f7a7-9c72-4eeb-b051-0109afae8c6b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Viewports\Toolbars">
+      <UniqueIdentifier>{23eb5ef7-4b72-4c9d-824b-b135224a8067}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Viewports\Dialogs">
+      <UniqueIdentifier>{b3dc84d8-2733-4125-b1fb-fbb3a05e9c9b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Viewports\Panels">
+      <UniqueIdentifier>{f8919e24-21bb-4916-a791-474c3e08d292}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Viewports\Toolbars">
+      <UniqueIdentifier>{81dc0f2b-b30a-4ebf-9a10-b939950f428d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -141,14 +159,23 @@
     <ClCompile Include="src\MiniXml\ProjectXml.cpp">
       <Filter>Source Files\MiniXml</Filter>
     </ClCompile>
-    <ClCompile Include="src\Viewports\StartupDialog.cpp">
-      <Filter>Source Files\Viewports</Filter>
-    </ClCompile>
     <ClCompile Include="src\Platform\WindowsFileDialog.cpp">
       <Filter>Source Files\Platform</Filter>
     </ClCompile>
     <ClCompile Include="src\Database\ResourceDatabase.cpp">
       <Filter>Source Files\Database</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp">
+      <Filter>Source Files\Viewports\Dialogs</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp">
+      <Filter>Source Files\Viewports\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Panels\ResourceInspector.cpp">
+      <Filter>Source Files\Viewports\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp">
+      <Filter>Source Files\Viewports\Panels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -275,14 +302,23 @@
     <ClInclude Include="include\MiniXml\ProjectXml.h">
       <Filter>Header Files\MiniXml</Filter>
     </ClInclude>
-    <ClInclude Include="include\Viewports\StartupDialog.h">
-      <Filter>Header Files\Viewports</Filter>
-    </ClInclude>
     <ClInclude Include="include\Platform\WindowsFileDialog.h">
       <Filter>Header Files\Platform</Filter>
     </ClInclude>
     <ClInclude Include="include\Database\ResourceDatabase.h">
       <Filter>Header Files\Database</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h">
+      <Filter>Header Files\Viewports\Dialogs</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h">
+      <Filter>Header Files\Viewports\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Panels\ResourceInspector.h">
+      <Filter>Header Files\Viewports\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Panels\SceneExplorer.h">
+      <Filter>Header Files\Viewports\Panels</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

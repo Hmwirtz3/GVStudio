@@ -155,7 +155,10 @@
     <ClCompile Include="src\MiniXml\ProjectXml.cpp" />
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
     <ClCompile Include="src\Platform\WindowsFileDialog.cpp" />
-    <ClCompile Include="src\Viewports\StartupDialog.cpp" />
+    <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp" />
+    <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp" />
+    <ClCompile Include="src\Viewports\Panels\ResourceInspector.cpp" />
+    <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Database\AssetDatabase.h" />
@@ -201,7 +204,10 @@
     <ClInclude Include="include\MiniXml\ProjectXml.h" />
     <ClInclude Include="include\MiniXml\SceneXml.h" />
     <ClInclude Include="include\Platform\WindowsFileDialog.h" />
-    <ClInclude Include="include\Viewports\StartupDialog.h" />
+    <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h" />
+    <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h" />
+    <ClInclude Include="include\Viewports\Panels\ResourceInspector.h" />
+    <ClInclude Include="include\Viewports\Panels\SceneExplorer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,5 +1,5 @@
 ﻿#include "GVStudio/GVStudio.h"
-#include "Viewports/StartupDialog.h"
+#include "Viewports/Dialogs/StartupDialog.h"
 
 #include "SDL3/SDL.h"
 #include "SDL3/SDL_opengl.h"
@@ -20,12 +20,13 @@ namespace fs = std::filesystem;
 GV_STUDIO::GV_STUDIO()
     : m_state(),
     m_rootFolder(),
-    m_logicRegistry(),
-    m_sceneManager(m_rootFolder, m_logicRegistry),
+    m_logicUnitRegistry(),
+    m_sceneManager(m_rootFolder, m_logicUnitRegistry),
     m_assetDataBase(),
+    m_logicUnitInspector(),
     m_selectedObject(nullptr),
     m_showSceneExplorer(true),
-    m_showLogicUnitInspector(true),
+    //m_showLogicUnitInspector(true),
     m_showResourceExplorer(true)
 {
     if (!InitSDLAndGL())
@@ -183,8 +184,8 @@ void GV_STUDIO::InitProject()
     std::cout << "  ProjectRoot:  " << root.string() << "\n";
     std::cout << "  SourcePath:   " << fullSource.string() << "\n";
 
-    m_logicRegistry.Clear();
-    m_logicRegistry.ParseFolder(fullSource.string());
+    m_logicUnitRegistry.Clear();
+    m_logicUnitRegistry.ParseFolder(fullSource.string());
 
     fs::path fullResources = root / m_state.project.resourceFolder;
     std::cout << "  ResourcePath: " << fullResources.string() << "\n";
@@ -254,7 +255,7 @@ int GV_STUDIO::RUN()
 
             DrawDockspace();
             DrawSceneExplorer();
-            DrawLogicUnitInspector();
+            m_logicUnitInspector.Draw(m_selectedObject);
             DrawResourceExplorer();
         }
 
@@ -512,7 +513,7 @@ void GV_STUDIO::DrawSceneExplorer()
     ImGui::End();
 }
 
-void GV_STUDIO::DrawLogicUnitInspector()
+/*void GV_STUDIO::DrawLogicUnitInspector()
 {
     if (!m_showLogicUnitInspector)
         return;
@@ -587,7 +588,7 @@ void GV_STUDIO::DrawLogicUnitInspector()
 
     ImGui::End();
 }
-
+*/
 void GV_STUDIO::DrawLogicUnitRegistry()
 {
     ImGui::Text("Logic Units");
@@ -602,15 +603,15 @@ void GV_STUDIO::DrawLogicUnitRegistry()
 
         std::cout << "[UI] Source Folder Resolved: " << fullSource.string() << "\n";
 
-        m_logicRegistry.Clear();
-        m_logicRegistry.ParseFolder(fullSource.string());
+        m_logicUnitRegistry.Clear();
+        m_logicUnitRegistry.ParseFolder(fullSource.string());
 
         std::cout << "[UI] Refresh Complete\n";
     }
 
     ImGui::Spacing();
 
-    const auto& units = m_logicRegistry.GetAll();
+    const auto& units = m_logicUnitRegistry.GetAll();
 
     for (const auto& unit : units)
     {
@@ -723,7 +724,7 @@ void GV_STUDIO::DrawResourceExplorer()
 
 SceneObject* GV_STUDIO::CreateObjectFromLogicUnit(const std::string& typeName, SceneFolder* targetFolder)
 {
-    const GV_Logic_Unit* def = m_logicRegistry.Find(typeName);
+    const GV_Logic_Unit* def = m_logicUnitRegistry.Find(typeName);
     if (!def)
         return nullptr;
 

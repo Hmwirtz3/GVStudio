@@ -93,3 +93,52 @@ void SceneManager::SaveAllObjects(const SceneFolder& folder,
         SaveAllObjects(*c, objectsDir);
     }
 }
+
+SceneObject* SceneManager::CreateObjectFromLogicUnit(const std::string& typeName, SceneFolder* targetFolder, LogicUnitRegistry& logicUnitRegistry)
+{
+    const GV_Logic_Unit* def = logicUnitRegistry.Find(typeName);
+    if (!def)
+        return nullptr;
+
+    auto obj = std::make_unique<SceneObject>();
+    obj->name = typeName;
+
+    obj->def = std::make_unique<GV_Logic_Unit_Instance>();
+    obj->def->def = const_cast<GV_Logic_Unit*>(def);
+    obj->def->values.resize(def->params.size());
+
+    for (size_t i = 0; i < def->params.size(); i++)
+    {
+        const LU_Param_Def& pDef = def->params[i];
+        LU_Param_Val& val = obj->def->values[i];
+
+        switch (pDef.type)
+        {
+        case ParamType::Float:
+            val.fval = pDef.defaultValue.empty() ? 0.0f : std::stof(pDef.defaultValue);
+            break;
+
+        case ParamType::Int:
+            val.ival = pDef.defaultValue.empty() ? 0 : std::stoi(pDef.defaultValue);
+            break;
+
+        case ParamType::Bool:
+            val.bval = (pDef.defaultValue == "true" || pDef.defaultValue == "1");
+            break;
+
+        case ParamType::String:
+        case ParamType::Event:
+        case ParamType::Message:
+            val.sval = pDef.defaultValue;
+            break;
+
+        default:
+            break;
+        }
+    }
+
+    SceneObject* ptr = obj.get();
+    targetFolder->objects.push_back(std::move(obj));
+
+    return ptr;
+}
