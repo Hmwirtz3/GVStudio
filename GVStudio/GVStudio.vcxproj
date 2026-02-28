@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -108,6 +108,7 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -156,8 +157,10 @@
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
     <ClCompile Include="src\Platform\WindowsFileDialog.cpp" />
     <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp" />
+    <ClCompile Include="src\Viewports\Panels\ResourceDatabaseTab.cpp" />
     <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp" />
-    <ClCompile Include="src\Viewports\Panels\ResourceInspector.cpp" />
+    <ClCompile Include="src\Viewports\Panels\LogicUnitRegistryTab.cpp" />
+    <ClCompile Include="src\Viewports\Panels\ResourceInspectorPanel.cpp" />
     <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -205,8 +208,10 @@
     <ClInclude Include="include\MiniXml\SceneXml.h" />
     <ClInclude Include="include\Platform\WindowsFileDialog.h" />
     <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h" />
+    <ClInclude Include="include\Viewports\Panels\ResourceDatabaseTab.h" />
     <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h" />
-    <ClInclude Include="include\Viewports\Panels\ResourceInspector.h" />
+    <ClInclude Include="include\Viewports\Panels\LogicUnitRegistryTab.h" />
+    <ClInclude Include="include\Viewports\Panels\ResourceInspectorPanel.h" />
     <ClInclude Include="include\Viewports\Panels\SceneExplorer.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

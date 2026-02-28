@@ -171,10 +171,16 @@
     <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp">
       <Filter>Source Files\Viewports\Panels</Filter>
     </ClCompile>
-    <ClCompile Include="src\Viewports\Panels\ResourceInspector.cpp">
+    <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp">
       <Filter>Source Files\Viewports\Panels</Filter>
     </ClCompile>
-    <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp">
+    <ClCompile Include="src\Viewports\Panels\ResourceDatabaseTab.cpp">
+      <Filter>Source Files\Viewports\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Panels\ResourceInspectorPanel.cpp">
+      <Filter>Source Files\Viewports\Panels</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Panels\LogicUnitRegistryTab.cpp">
       <Filter>Source Files\Viewports\Panels</Filter>
     </ClCompile>
   </ItemGroup>
@@ -314,10 +320,16 @@
     <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h">
       <Filter>Header Files\Viewports\Panels</Filter>
     </ClInclude>
-    <ClInclude Include="include\Viewports\Panels\ResourceInspector.h">
+    <ClInclude Include="include\Viewports\Panels\SceneExplorer.h">
       <Filter>Header Files\Viewports\Panels</Filter>
     </ClInclude>
-    <ClInclude Include="include\Viewports\Panels\SceneExplorer.h">
+    <ClInclude Include="include\Viewports\Panels\LogicUnitRegistryTab.h">
+      <Filter>Header Files\Viewports\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Panels\ResourceDatabaseTab.h">
+      <Filter>Header Files\Viewports\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Panels\ResourceInspectorPanel.h">
       <Filter>Header Files\Viewports\Panels</Filter>
     </ClInclude>
   </ItemGroup>

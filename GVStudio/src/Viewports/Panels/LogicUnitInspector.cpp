@@ -3,17 +3,17 @@
 
 #include "imgui/imgui.h"
 
-void LogicUnitInspector::SetVisible(bool visible)
+void LogicUnitInspectorPanel::SetVisible(bool visible)
 {
 	m_isVisible = visible;
 }
 
-bool LogicUnitInspector::IsVisible() const
+bool LogicUnitInspectorPanel::IsVisible() const
 {
 	return m_isVisible;
 }
 
-void LogicUnitInspector::Draw(SceneObject* selectedObject)
+void LogicUnitInspectorPanel::Draw(SceneObject* selectedObject)
 {
 	if (!m_isVisible)
 		return;

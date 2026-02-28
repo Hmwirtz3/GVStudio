@@ -1,6 +1,6 @@
 #include "GVFramework/Scene/SceneObject.h"
 
-class LogicUnitInspector
+class LogicUnitInspectorPanel
 {
 
 private:

@@ -1,3 +1,30 @@
+////////////////////////////////////////////
+//  
+//  
+//  
+//  To do:
+//  Abstract away rendering API backends
+//  Clean up unused member variables
+//  SceneGraph 
+//  SceneViewer
+//  Exporter templates
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//  
+//////////////////////////////////////////////
+
 #pragma once
 
 #include <string>
@@ -6,10 +33,15 @@
 #include "Database/AssetDatabase.h"
 #include "Database/LogicUnitRegistry.h"
 #include "Database/ResourceDatabase.h"
+
 #include "GVFramework/Scene/SceneManager.h"
 
 #include "Viewports/Panels/LogicUnitInspector.h"
 #include "Viewports/Panels/SceneExplorer.h"
+#include "Viewports/Panels/ResourceInspectorPanel.h"
+#include "Viewports/Panels/LogicUnitRegistryTab.h"
+#include "Viewports/Panels/ResourceDatabaseTab.h"
+
 
 #include "SDL3/SDL.h"
 
@@ -72,7 +104,10 @@ private:
     
     GV_State m_state;
 
-    
+    ResourceDatabaseTab m_resourceTab;
+
+    LogicUnitRegistryTab m_logicUnitTab;
+
     SceneFolder m_rootFolder;
     SceneFolder* m_selectedFolder = &m_rootFolder;
    
@@ -97,7 +132,9 @@ private:
 
     LogicUnitRegistry m_logicUnitRegistry;
 
-    LogicUnitInspector m_logicUnitInspector;
+    LogicUnitInspectorPanel m_logicUnitInspectorPanel;
+
+    ResourceInspectorPanel m_resourceInspectorPanel;
 
     ResourceDatabase m_resourceDatabase;
 
@@ -127,13 +164,8 @@ private:
 
 private:
     void ShowStartupDialog(GV_State state);
-    void DrawLogicUnitRegistry();
-    void DrawResourceFolderTree();
     void DrawResourceNode(const ResourceNode* node);
-    void DrawDockspace();
-    void DrawSceneExplorer();
-    void DrawSceneFolderRecursive(SceneFolder& folder);
-    void DrawResourceExplorer();
+ 
 
 private: 
     
