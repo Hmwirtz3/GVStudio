@@ -1,9 +1,7 @@
-﻿
-#include "GVStudio/GVStudio.h"
+﻿#include "GVStudio/GVStudio.h"
 #include "Viewports/Dialogs/StartupDialog.h"
 
 #include <SDL3/SDL.h>
-
 #include "3rdParty/glad/glad.h"
 
 #include "imgui/imgui.h"
@@ -14,10 +12,6 @@
 #include <iostream>
 #include <string>
 #include <cstring>
-
-
-
-
 
 namespace fs = std::filesystem;
 
@@ -30,7 +24,6 @@ GV_STUDIO::GV_STUDIO()
     m_logicUnitInspectorPanel(),
     m_selectedObject(nullptr),
     m_showSceneExplorer(true),
-    //m_showLogicUnitInspector(true),
     m_showResourceExplorer(true)
 {
     if (!InitSDLAndGL())
@@ -101,9 +94,7 @@ bool GV_STUDIO::InitSDLAndGL()
         return false;
     }
 
-
     SDL_GL_SetSwapInterval(1);
-
     return true;
 }
 
@@ -111,7 +102,6 @@ bool GV_STUDIO::InitImGui()
 {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-
     ImGui::StyleColorsDark();
 
     if (!ImGui_ImplSDL3_InitForOpenGL(m_window, m_glContext))
@@ -153,39 +143,6 @@ void GV_STUDIO::ShutdownSDLAndGL()
     SDL_Quit();
 }
 
-void GV_STUDIO::DebugPrintProjectInfo() const
-{
-    const GV_Project_Info& project = m_state.project;
-
-    std::cout << "\n=====================================\n";
-    std::cout << "[GV_STUDIO] Project Debug Dump\n";
-    std::cout << "-------------------------------------\n";
-
-    std::cout << "Project Name:   " << project.projectName << "\n";
-    std::cout << "Project Path:   " << project.projectPath << "\n";
-    std::cout << "Project Root:   " << project.projectRoot << "\n";
-
-    std::cout << "\nFolders:\n";
-    std::cout << "  DataFolder:      " << project.dataFolder << "\n";
-    std::cout << "  ResourceFolder:  " << project.resourceFolder << "\n";
-    std::cout << "  SourceFolder:    " << project.sourceFolder << "\n";
-
-    std::cout << "\nScenes (" << project.scenes.size() << "):\n";
-
-    for (size_t i = 0; i < project.scenes.size(); ++i)
-    {
-        const GV_Scene_Info& scene = project.scenes[i];
-
-        std::cout << "  Scene " << i << "\n";
-        std::cout << "    Name: " << scene.sceneName << "\n";
-        std::cout << "    Path: " << scene.scenePath << "\n";
-    }
-
-    std::cout << "\nStartup Scene: " << project.startupScene << "\n";
-
-    std::cout << "=====================================\n\n";
-}
-
 void GV_STUDIO::InitProject()
 {
     fs::path root = fs::path(m_state.project.projectPath).parent_path();
@@ -210,14 +167,6 @@ void GV_STUDIO::InitProject()
 
     m_selectedObject = nullptr;
     m_selectedFolder = &m_rootFolder;
-
-    m_folderPendingDelete = nullptr;
-    m_objectPendingDelete = nullptr;
-    m_folderRenaming = nullptr;
-    m_objectRenaming = nullptr;
-    m_renameBuffer[0] = 0;
-
-    DebugPrintProjectInfo();
 }
 
 int GV_STUDIO::RUN()
@@ -233,7 +182,6 @@ int GV_STUDIO::RUN()
         while (SDL_PollEvent(&e))
         {
             ImGui_ImplSDL3_ProcessEvent(&e);
-
             if (e.type == SDL_EVENT_QUIT)
                 running = false;
         }
@@ -244,13 +192,12 @@ int GV_STUDIO::RUN()
 
         if (m_state.showStartupDialog)
         {
-            ShowStartupDialog(m_state); // Abstract this away from GV_Studio class
+            ShowStartupDialog(m_state);
 
             if (!m_state.showStartupDialog &&
                 m_state.mode == EditorMode::ProjectOpen &&
                 !m_projectInitialized)
             {
-                std::cout << "[GV_STUDIO] Project opened. Initializing...\n";
                 InitProject();
                 m_projectInitialized = true;
             }
@@ -259,17 +206,30 @@ int GV_STUDIO::RUN()
         {
             if (m_state.mode == EditorMode::ProjectOpen && !m_projectInitialized)
             {
-                std::cout << "[GV_STUDIO] Project open state detected. Initializing...\n";
                 InitProject();
                 m_projectInitialized = true;
             }
 
-            
             m_sceneExplorer.Draw(m_state, m_sceneManager, m_selectedObject, m_selectedFolder);
             m_logicUnitInspectorPanel.Draw(m_selectedObject);
-            m_resourceInspectorPanel.Draw(m_state,  m_logicUnitRegistry, m_resourceDatabase);
-            m_viewportPanel.Draw(m_rootFolder);
-            
+            m_resourceInspectorPanel.Draw(m_state, m_logicUnitRegistry, m_resourceDatabase);
+
+            // ***** FIX STARTS HERE *****
+
+            fs::path projectRoot =
+                fs::path(m_state.project.projectPath).parent_path();
+
+            fs::path resourceRoot =
+                projectRoot / m_state.project.resourceFolder;
+
+            resourceRoot = fs::absolute(resourceRoot);
+
+            m_viewportPanel.Draw(
+                m_sceneManager.GetRootFolder(),
+                resourceRoot.string()
+            );
+
+            // ***** FIX ENDS HERE *****
         }
 
         ImGui::Render();
@@ -282,7 +242,6 @@ int GV_STUDIO::RUN()
         glClear(GL_COLOR_BUFFER_BIT);
 
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
         SDL_GL_SwapWindow(m_window);
     }
 
@@ -293,12 +252,3 @@ void GV_STUDIO::ShowStartupDialog(GV_State)
 {
     StartupDialog::Draw(m_state);
 }
-
-
-
-
-
-
-
-
-

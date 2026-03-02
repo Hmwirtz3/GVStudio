@@ -1,8 +1,8 @@
-#pragma once 
+#pragma once
 
 #include <cmath>
 
-constexpr float PI = 3.14159;
+constexpr float PI = 3.14159f;
 
 struct Vec3
 {
@@ -44,15 +44,97 @@ inline Vec3 Normalize(const Vec3& v)
 
 struct Mat4
 {
-    float m[16]; 
+    float m[16];
 
     static Mat4 Identity()
     {
         Mat4 r{};
-        r.m[0] = 1; r.m[5] = 1; r.m[10] = 1; r.m[15] = 1;
+        r.m[0] = 1.0f;
+        r.m[5] = 1.0f;
+        r.m[10] = 1.0f;
+        r.m[15] = 1.0f;
         return r;
     }
 };
+
+inline Mat4 operator*(const Mat4& a, const Mat4& b)
+{
+    Mat4 r{};
+
+    for (int col = 0; col < 4; ++col)
+    {
+        for (int row = 0; row < 4; ++row)
+        {
+            r.m[col * 4 + row] =
+                a.m[0 * 4 + row] * b.m[col * 4 + 0] +
+                a.m[1 * 4 + row] * b.m[col * 4 + 1] +
+                a.m[2 * 4 + row] * b.m[col * 4 + 2] +
+                a.m[3 * 4 + row] * b.m[col * 4 + 3];
+        }
+    }
+
+    return r;
+}
+
+inline Mat4 Translate(const Vec3& t)
+{
+    Mat4 r = Mat4::Identity();
+    r.m[12] = t.x;
+    r.m[13] = t.y;
+    r.m[14] = t.z;
+    return r;
+}
+
+inline Mat4 Scale(const Vec3& s)
+{
+    Mat4 r = Mat4::Identity();
+    r.m[0] = s.x;
+    r.m[5] = s.y;
+    r.m[10] = s.z;
+    return r;
+}
+
+inline Mat4 RotateX(float radians)
+{
+    Mat4 r = Mat4::Identity();
+    float c = std::cos(radians);
+    float s = std::sin(radians);
+
+    r.m[5] = c;
+    r.m[6] = s;
+    r.m[9] = -s;
+    r.m[10] = c;
+
+    return r;
+}
+
+inline Mat4 RotateY(float radians)
+{
+    Mat4 r = Mat4::Identity();
+    float c = std::cos(radians);
+    float s = std::sin(radians);
+
+    r.m[0] = c;
+    r.m[2] = -s;
+    r.m[8] = s;
+    r.m[10] = c;
+
+    return r;
+}
+
+inline Mat4 RotateZ(float radians)
+{
+    Mat4 r = Mat4::Identity();
+    float c = std::cos(radians);
+    float s = std::sin(radians);
+
+    r.m[0] = c;
+    r.m[1] = s;
+    r.m[4] = -s;
+    r.m[5] = c;
+
+    return r;
+}
 
 inline Mat4 Perspective(float fovRadians, float aspect, float nearZ, float farZ)
 {
@@ -67,7 +149,6 @@ inline Mat4 Perspective(float fovRadians, float aspect, float nearZ, float farZ)
 
     return r;
 }
-
 
 inline Mat4 LookAt(const Vec3& eye, const Vec3& target, const Vec3& up)
 {

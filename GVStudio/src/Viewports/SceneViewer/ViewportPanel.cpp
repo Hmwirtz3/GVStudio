@@ -2,7 +2,8 @@
 
 #include "imgui/imgui.h"
 
-void ViewportPanel::Draw(SceneFolder& scene)
+void ViewportPanel::Draw(SceneFolder& scene,
+    const std::string& resourceRoot)
 {
     ImGui::Begin("SceneViewport");
 
@@ -21,7 +22,7 @@ void ViewportPanel::Draw(SceneFolder& scene)
         }
 
         m_viewer.Update();
-        m_viewer.Render(scene);
+        m_viewer.Render(scene, resourceRoot);
 
         ImGui::Image(
             (ImTextureID)(uintptr_t)m_viewer.GetColorTexture(),

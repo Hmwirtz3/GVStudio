@@ -5,7 +5,7 @@ class ViewportPanel
 {
 public:
 
-	void Draw(SceneFolder& scene);
+	void Draw(SceneFolder& scene, const std::string& resourceRoot);
 
 private:
 

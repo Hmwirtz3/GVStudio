@@ -9,7 +9,7 @@ public:
 	void Resize(int width, int height);
 	void Update();
 
-	void Render(SceneFolder& scene);
+	void Render(SceneFolder& scene, const std::string& resourceRoot);
 
 	unsigned int GetColorTexture() const;
 

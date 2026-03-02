@@ -1,4 +1,5 @@
 #include "Viewports/SceneViewer/SceneViewer.h"
+#include "Renderer/GatherScene.h"
 #include "imgui/imgui.h"
 void SceneViewer::Resize(int width, int height)
 {
@@ -44,10 +45,9 @@ void SceneViewer::Update()
     }
 }
 
-void SceneViewer::Render(SceneFolder& scene)
+void SceneViewer::Render(SceneFolder& scene,
+    const std::string& resourceRoot)
 {
-    (void)scene;
-
     static bool initialized = false;
 
     if (!initialized)
@@ -61,9 +61,18 @@ void SceneViewer::Render(SceneFolder& scene)
         initialized = true;
     }
 
+    std::vector<RenderItem> items;
+    GatherScene::Collect(scene, resourceRoot, items);
+
     m_renderer.Begin(m_camera.GetView(), m_camera.GetProjection());
 
     m_renderer.DrawGrid();
+
+    for (const auto& item : items)
+    {
+        if (!item.modelPath.empty())
+            m_renderer.DrawModel(item.modelPath, item.model);
+    }
 
     m_renderer.End();
 }
