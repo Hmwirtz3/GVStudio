@@ -2,14 +2,13 @@
 #include "GVStudio/GVStudio.h"
 #include "Viewports/Dialogs/StartupDialog.h"
 
-#include "SDL3/SDL.h"
-#include "SDL3/SDL_opengl.h"
+#include <SDL3/SDL.h>
+
+#include "3rdParty/glad/glad.h"
 
 #include "imgui/imgui.h"
 #include "imgui/imgui_impl_sdl3.h"
 #include "imgui/imgui_impl_opengl3.h"
-
-#include <GL/gl.h>
 
 #include <filesystem>
 #include <iostream>
@@ -95,6 +94,13 @@ bool GV_STUDIO::InitSDLAndGL()
 
     if (!SDL_GL_MakeCurrent(m_window, m_glContext))
         return false;
+
+    if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
+    {
+        printf("Failed to initialize GLAD\n");
+        return false;
+    }
+
 
     SDL_GL_SetSwapInterval(1);
 
@@ -262,6 +268,8 @@ int GV_STUDIO::RUN()
             m_sceneExplorer.Draw(m_state, m_sceneManager, m_selectedObject, m_selectedFolder);
             m_logicUnitInspectorPanel.Draw(m_selectedObject);
             m_resourceInspectorPanel.Draw(m_state,  m_logicUnitRegistry, m_resourceDatabase);
+            m_viewportPanel.Draw(m_rootFolder);
+            
         }
 
         ImGui::Render();

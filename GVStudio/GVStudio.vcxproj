@@ -135,6 +135,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\3rdParty\glad.c" />
     <ClCompile Include="src\Database\AssetDatabase.cpp" />
     <ClCompile Include="src\Database\LogicUnitRegistry.cpp" />
     <ClCompile Include="src\Database\ResourceDatabase.cpp" />
@@ -156,14 +157,22 @@
     <ClCompile Include="src\MiniXml\ProjectXml.cpp" />
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
     <ClCompile Include="src\Platform\WindowsFileDialog.cpp" />
+    <ClCompile Include="src\Renderer\GatherScene.cpp" />
+    <ClCompile Include="src\Renderer\Renderer.cpp" />
     <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp" />
     <ClCompile Include="src\Viewports\Panels\ResourceDatabaseTab.cpp" />
     <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp" />
     <ClCompile Include="src\Viewports\Panels\LogicUnitRegistryTab.cpp" />
     <ClCompile Include="src\Viewports\Panels\ResourceInspectorPanel.cpp" />
     <ClCompile Include="src\Viewports\Panels\SceneExplorer.cpp" />
+    <ClCompile Include="src\Viewports\SceneViewer\EditorCamera.cpp" />
+    <ClCompile Include="src\Viewports\SceneViewer\Gizmos.cpp" />
+    <ClCompile Include="src\Viewports\SceneViewer\SceneViewer.cpp" />
+    <ClCompile Include="src\Viewports\SceneViewer\ViewportPanel.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\3rdParty\glad\glad.h" />
+    <ClInclude Include="include\3rdParty\KHR\KHR\khrplatform.h" />
     <ClInclude Include="include\Database\AssetDatabase.h" />
     <ClInclude Include="include\Database\LogicUnitRegistry.h" />
     <ClInclude Include="include\Database\ResourceDatabase.h" />
@@ -202,17 +211,24 @@
     <ClInclude Include="include\imgui\imstb_rectpack.h" />
     <ClInclude Include="include\imgui\imstb_textedit.h" />
     <ClInclude Include="include\imgui\imstb_truetype.h" />
+    <ClInclude Include="include\MiniMath\MiniMath.h" />
     <ClInclude Include="include\MiniXml\MiniXml.h" />
     <ClInclude Include="include\MiniXml\ObjectXml.h" />
     <ClInclude Include="include\MiniXml\ProjectXml.h" />
     <ClInclude Include="include\MiniXml\SceneXml.h" />
     <ClInclude Include="include\Platform\WindowsFileDialog.h" />
+    <ClInclude Include="include\Renderer\GatherScene.h" />
+    <ClInclude Include="include\Renderer\Renderer.h" />
     <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h" />
     <ClInclude Include="include\Viewports\Panels\ResourceDatabaseTab.h" />
     <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h" />
     <ClInclude Include="include\Viewports\Panels\LogicUnitRegistryTab.h" />
     <ClInclude Include="include\Viewports\Panels\ResourceInspectorPanel.h" />
     <ClInclude Include="include\Viewports\Panels\SceneExplorer.h" />
+    <ClInclude Include="include\Viewports\SceneViewer\EditorCamera.h" />
+    <ClInclude Include="include\Viewports\SceneViewer\Gizmos.h" />
+    <ClInclude Include="include\Viewports\SceneViewer\SceneViewer.h" />
+    <ClInclude Include="include\Viewports\SceneViewer\ViewportPanel.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

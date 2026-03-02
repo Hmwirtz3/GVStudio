@@ -5,7 +5,7 @@
 //  To do:
 //  Abstract away rendering API backends
 //  Clean up unused member variables
-//  SceneGraph 
+//  StateGraph 
 //  SceneViewer
 //  Exporter templates
 //  
@@ -41,6 +41,7 @@
 #include "Viewports/Panels/ResourceInspectorPanel.h"
 #include "Viewports/Panels/LogicUnitRegistryTab.h"
 #include "Viewports/Panels/ResourceDatabaseTab.h"
+#include "Viewports/SceneViewer/ViewportPanel.h"
 
 
 #include "SDL3/SDL.h"
@@ -125,6 +126,7 @@ private:
     bool m_showSceneExplorer = true;
     bool m_showResourceExplorer = true;
 
+    ViewportPanel m_viewportPanel;
 
     SceneManager m_sceneManager;
 

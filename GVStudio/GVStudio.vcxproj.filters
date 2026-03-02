@@ -58,12 +58,6 @@
     <Filter Include="Source Files\GVFramework\LogicUnit">
       <UniqueIdentifier>{83d3a5a7-7d50-403d-8a12-fae6f7483d72}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\imgui">
-      <UniqueIdentifier>{49135d2d-36b4-4dfc-bc4f-df99bcc5e403}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\imgui">
-      <UniqueIdentifier>{738099d2-decf-483b-8802-61da0268465b}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\GVStudio">
       <UniqueIdentifier>{d8d9ffb6-5a45-460b-a02e-e46eb68a5da4}</UniqueIdentifier>
     </Filter>
@@ -100,6 +94,42 @@
     <Filter Include="Header Files\Viewports\Toolbars">
       <UniqueIdentifier>{81dc0f2b-b30a-4ebf-9a10-b939950f428d}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Viewports\SceneViewer">
+      <UniqueIdentifier>{4973a70c-5475-4d1f-9d83-c809518b5f72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Viewports\SceneViewer">
+      <UniqueIdentifier>{e6699523-484f-44ea-a58b-98c46024cd16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\MiniMath">
+      <UniqueIdentifier>{10ff1d82-0b97-466e-b4c6-3797c91d750e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdParty">
+      <UniqueIdentifier>{7b0463ee-ea4c-48ba-ba97-0ba331278a09}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rdParty">
+      <UniqueIdentifier>{8a860d23-64db-43d8-88e5-fda05cce7572}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rdParty\glad">
+      <UniqueIdentifier>{fc71ee20-59c9-4d86-a76f-8c391643524e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdParty\glad">
+      <UniqueIdentifier>{62ba0b8e-9352-422f-be1f-cd7777679a08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdParty\KHR">
+      <UniqueIdentifier>{40099135-55d8-49fc-90bd-67dd87dec753}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Renderer">
+      <UniqueIdentifier>{c8b6cbbe-ffda-472b-82c0-ce3c97b6a8e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Renderer">
+      <UniqueIdentifier>{a2d8292b-4052-410b-9aa9-572e2a9d220e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\3rdParty\imgui">
+      <UniqueIdentifier>{49135d2d-36b4-4dfc-bc4f-df99bcc5e403}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\3rdParty\imgui">
+      <UniqueIdentifier>{738099d2-decf-483b-8802-61da0268465b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -127,28 +157,28 @@
       <Filter>Source Files\GVFramework\LogicUnit</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_demo.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_draw.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_impl_opengl3.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_impl_sdl3.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_impl_win32.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_tables.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\imgui\imgui_widgets.cpp">
-      <Filter>Source Files\imgui</Filter>
+      <Filter>Source Files\3rdParty\imgui</Filter>
     </ClCompile>
     <ClCompile Include="src\Database\AssetDatabase.cpp">
       <Filter>Source Files\Database</Filter>
@@ -183,6 +213,27 @@
     <ClCompile Include="src\Viewports\Panels\LogicUnitRegistryTab.cpp">
       <Filter>Source Files\Viewports\Panels</Filter>
     </ClCompile>
+    <ClCompile Include="src\Viewports\SceneViewer\SceneViewer.cpp">
+      <Filter>Source Files\Viewports\SceneViewer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\SceneViewer\ViewportPanel.cpp">
+      <Filter>Source Files\Viewports\SceneViewer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\SceneViewer\EditorCamera.cpp">
+      <Filter>Source Files\Viewports\SceneViewer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\SceneViewer\Gizmos.cpp">
+      <Filter>Source Files\Viewports\SceneViewer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\3rdParty\glad.c">
+      <Filter>Source Files\3rdParty\glad</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\GatherScene.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\Renderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GVStudio\GVStudio.h">
@@ -216,88 +267,88 @@
       <Filter>Header Files\GVFramework\Chunk</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imconfig.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_allegro5.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_android.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_dx9.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_dx10.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_dx11.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_dx12.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_glfw.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_glut.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_metal.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_opengl2.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_opengl3.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_opengl3_loader.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_osx.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdl2.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdl3.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdlgpu3.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdlgpu3_shaders.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdlrenderer2.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_sdlrenderer3.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_vulkan.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_wgpu.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_impl_win32.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imgui_internal.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imstb_rectpack.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imstb_textedit.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\imgui\imstb_truetype.h">
-      <Filter>Header Files\imgui</Filter>
+      <Filter>Header Files\3rdParty\imgui</Filter>
     </ClInclude>
     <ClInclude Include="include\Database\AssetDatabase.h">
       <Filter>Header Files\Database</Filter>
@@ -331,6 +382,33 @@
     </ClInclude>
     <ClInclude Include="include\Viewports\Panels\ResourceInspectorPanel.h">
       <Filter>Header Files\Viewports\Panels</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\SceneViewer\SceneViewer.h">
+      <Filter>Header Files\Viewports\SceneViewer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\SceneViewer\ViewportPanel.h">
+      <Filter>Header Files\Viewports\SceneViewer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\SceneViewer\EditorCamera.h">
+      <Filter>Header Files\Viewports\SceneViewer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\SceneViewer\Gizmos.h">
+      <Filter>Header Files\Viewports\SceneViewer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MiniMath\MiniMath.h">
+      <Filter>Header Files\MiniMath</Filter>
+    </ClInclude>
+    <ClInclude Include="include\3rdParty\glad\glad.h">
+      <Filter>Header Files\3rdParty\glad</Filter>
+    </ClInclude>
+    <ClInclude Include="include\3rdParty\KHR\KHR\khrplatform.h">
+      <Filter>Header Files\3rdParty\KHR</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\GatherScene.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\Renderer.h">
+      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
