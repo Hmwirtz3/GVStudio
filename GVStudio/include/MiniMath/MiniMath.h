@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-constexpr float PI = 3.14159f;
+constexpr float PI = 3.14159265359f;
 
 struct Vec3
 {
@@ -42,6 +42,21 @@ inline Vec3 Normalize(const Vec3& v)
     return v * (1.0f / len);
 }
 
+struct Vec4
+{
+    float x, y, z, w;
+
+    Vec4() : x(0), y(0), z(0), w(0) {}
+    Vec4(float X, float Y, float Z, float W)
+        : x(X), y(Y), z(Z), w(W) {
+    }
+
+    Vec4 operator/(float s) const
+    {
+        return { x / s, y / s, z / s, w / s };
+    }
+};
+
 struct Mat4
 {
     float m[16];
@@ -72,6 +87,18 @@ inline Mat4 operator*(const Mat4& a, const Mat4& b)
                 a.m[3 * 4 + row] * b.m[col * 4 + 3];
         }
     }
+
+    return r;
+}
+
+inline Vec4 operator*(const Mat4& m, const Vec4& v)
+{
+    Vec4 r;
+
+    r.x = m.m[0] * v.x + m.m[4] * v.y + m.m[8] * v.z + m.m[12] * v.w;
+    r.y = m.m[1] * v.x + m.m[5] * v.y + m.m[9] * v.z + m.m[13] * v.w;
+    r.z = m.m[2] * v.x + m.m[6] * v.y + m.m[10] * v.z + m.m[14] * v.w;
+    r.w = m.m[3] * v.x + m.m[7] * v.y + m.m[11] * v.z + m.m[15] * v.w;
 
     return r;
 }
@@ -175,4 +202,135 @@ inline Mat4 LookAt(const Vec3& eye, const Vec3& target, const Vec3& up)
     r.m[14] = Dot(forward, eye);
 
     return r;
+}
+
+inline Mat4 Inverse(const Mat4& m)
+{
+    Mat4 inv;
+    float* invOut = inv.m;
+    const float* a = m.m;
+
+    invOut[0] = a[5] * a[10] * a[15] -
+        a[5] * a[11] * a[14] -
+        a[9] * a[6] * a[15] +
+        a[9] * a[7] * a[14] +
+        a[13] * a[6] * a[11] -
+        a[13] * a[7] * a[10];
+
+    invOut[1] = -a[1] * a[10] * a[15] +
+        a[1] * a[11] * a[14] +
+        a[9] * a[2] * a[15] -
+        a[9] * a[3] * a[14] -
+        a[13] * a[2] * a[11] +
+        a[13] * a[3] * a[10];
+
+    invOut[2] = a[1] * a[6] * a[15] -
+        a[1] * a[7] * a[14] -
+        a[5] * a[2] * a[15] +
+        a[5] * a[3] * a[14] +
+        a[13] * a[2] * a[7] -
+        a[13] * a[3] * a[6];
+
+    invOut[3] = -a[1] * a[6] * a[11] +
+        a[1] * a[7] * a[10] +
+        a[5] * a[2] * a[11] -
+        a[5] * a[3] * a[10] -
+        a[9] * a[2] * a[7] +
+        a[9] * a[3] * a[6];
+
+    invOut[4] = -a[4] * a[10] * a[15] +
+        a[4] * a[11] * a[14] +
+        a[8] * a[6] * a[15] -
+        a[8] * a[7] * a[14] -
+        a[12] * a[6] * a[11] +
+        a[12] * a[7] * a[10];
+
+    invOut[5] = a[0] * a[10] * a[15] -
+        a[0] * a[11] * a[14] -
+        a[8] * a[2] * a[15] +
+        a[8] * a[3] * a[14] +
+        a[12] * a[2] * a[11] -
+        a[12] * a[3] * a[10];
+
+    invOut[6] = -a[0] * a[6] * a[15] +
+        a[0] * a[7] * a[14] +
+        a[4] * a[2] * a[15] -
+        a[4] * a[3] * a[14] -
+        a[12] * a[2] * a[7] +
+        a[12] * a[3] * a[6];
+
+    invOut[7] = a[0] * a[6] * a[11] -
+        a[0] * a[7] * a[10] -
+        a[4] * a[2] * a[11] +
+        a[4] * a[3] * a[10] +
+        a[8] * a[2] * a[7] -
+        a[8] * a[3] * a[6];
+
+    invOut[8] = a[4] * a[9] * a[15] -
+        a[4] * a[11] * a[13] -
+        a[8] * a[5] * a[15] +
+        a[8] * a[7] * a[13] +
+        a[12] * a[5] * a[11] -
+        a[12] * a[7] * a[9];
+
+    invOut[9] = -a[0] * a[9] * a[15] +
+        a[0] * a[11] * a[13] +
+        a[8] * a[1] * a[15] -
+        a[8] * a[3] * a[13] -
+        a[12] * a[1] * a[11] +
+        a[12] * a[3] * a[9];
+
+    invOut[10] = a[0] * a[5] * a[15] -
+        a[0] * a[7] * a[13] -
+        a[4] * a[1] * a[15] +
+        a[4] * a[3] * a[13] +
+        a[12] * a[1] * a[7] -
+        a[12] * a[3] * a[5];
+
+    invOut[11] = -a[0] * a[5] * a[11] +
+        a[0] * a[7] * a[9] +
+        a[4] * a[1] * a[11] -
+        a[4] * a[3] * a[9] -
+        a[8] * a[1] * a[7] +
+        a[8] * a[3] * a[5];
+
+    invOut[12] = -a[4] * a[9] * a[14] +
+        a[4] * a[10] * a[13] +
+        a[8] * a[5] * a[14] -
+        a[8] * a[6] * a[13] -
+        a[12] * a[5] * a[10] +
+        a[12] * a[6] * a[9];
+
+    invOut[13] = a[0] * a[9] * a[14] -
+        a[0] * a[10] * a[13] -
+        a[8] * a[1] * a[14] +
+        a[8] * a[2] * a[13] +
+        a[12] * a[1] * a[10] -
+        a[12] * a[2] * a[9];
+
+    invOut[14] = -a[0] * a[5] * a[14] +
+        a[0] * a[6] * a[13] +
+        a[4] * a[1] * a[14] -
+        a[4] * a[2] * a[13] -
+        a[12] * a[1] * a[6] +
+        a[12] * a[2] * a[5];
+
+    invOut[15] = a[0] * a[5] * a[10] -
+        a[0] * a[6] * a[9] -
+        a[4] * a[1] * a[10] +
+        a[4] * a[2] * a[9] +
+        a[8] * a[1] * a[6] -
+        a[8] * a[2] * a[5];
+
+    float det = a[0] * invOut[0] + a[1] * invOut[4] + a[2] * invOut[8] + a[3] * invOut[12];
+
+    if (fabs(det) < 0.000001f)
+        return Mat4::Identity();
+
+    float invDet = 1.0f / det;
+
+    for (int i = 0; i < 16; i++)
+        invOut[i] *= invDet;
+
+    return inv;
 }

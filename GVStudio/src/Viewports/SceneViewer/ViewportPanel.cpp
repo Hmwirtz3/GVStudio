@@ -2,8 +2,11 @@
 
 #include "imgui/imgui.h"
 
+#include <iostream>
+
 void ViewportPanel::Draw(SceneFolder& scene,
-    const std::string& resourceRoot)
+    const std::string& resourceRoot,
+    SceneObject*& selectedObject)
 {
     ImGui::Begin("SceneViewport");
 
@@ -22,7 +25,7 @@ void ViewportPanel::Draw(SceneFolder& scene,
         }
 
         m_viewer.Update();
-        m_viewer.Render(scene, resourceRoot);
+        m_viewer.Render(scene, resourceRoot, selectedObject);
 
         ImGui::Image(
             (ImTextureID)(uintptr_t)m_viewer.GetColorTexture(),
@@ -30,6 +33,21 @@ void ViewportPanel::Draw(SceneFolder& scene,
             ImVec2(0, 1),
             ImVec2(1, 0)
         );
+
+        if (ImGui::IsItemHovered() &&
+            ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        {
+            ImVec2 mouse = ImGui::GetMousePos();
+
+            SceneObject* hit =
+                m_viewer.PickObject(
+                    scene,
+                    resourceRoot,
+                    mouse.x,
+                    mouse.y);
+
+            selectedObject = hit;
+        }
     }
 
     ImGui::End();

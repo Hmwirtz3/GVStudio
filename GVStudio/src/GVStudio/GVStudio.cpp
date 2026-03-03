@@ -226,7 +226,8 @@ int GV_STUDIO::RUN()
 
             m_viewportPanel.Draw(
                 m_sceneManager.GetRootFolder(),
-                resourceRoot.string()
+                resourceRoot.string(),
+                m_selectedObject
             );
 
             // ***** FIX ENDS HERE *****
