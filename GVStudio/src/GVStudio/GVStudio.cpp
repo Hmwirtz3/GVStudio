@@ -213,6 +213,7 @@ int GV_STUDIO::RUN()
             m_sceneExplorer.Draw(m_state, m_sceneManager, m_selectedObject, m_selectedFolder);
             m_logicUnitInspectorPanel.Draw(m_selectedObject);
             m_resourceInspectorPanel.Draw(m_state, m_logicUnitRegistry, m_resourceDatabase);
+            m_mainToolbar.Draw(m_state, m_sceneManager);
 
             // ***** FIX STARTS HERE *****
 

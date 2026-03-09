@@ -130,6 +130,12 @@
     <Filter Include="Header Files\3rdParty\imgui">
       <UniqueIdentifier>{738099d2-decf-483b-8802-61da0268465b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Viewports\Toolbars\MainToolbar">
+      <UniqueIdentifier>{bcc21237-2785-4bdc-b436-8b30f8ff7700}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Viewports\Toolbars\MainToolbar">
+      <UniqueIdentifier>{624f8acd-4ac8-47e9-8551-e995ffc229b2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -233,6 +239,12 @@
     </ClCompile>
     <ClCompile Include="src\Renderer\Renderer.cpp">
       <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\FileTab.cpp">
+      <Filter>Source Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\MainToolbar.cpp">
+      <Filter>Source Files\Viewports\Toolbars\MainToolbar</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -409,6 +421,12 @@
     </ClInclude>
     <ClInclude Include="include\Renderer\Renderer.h">
       <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\FileTab.h">
+      <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\MainToolbar.h">
+      <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

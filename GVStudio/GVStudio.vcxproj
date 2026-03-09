@@ -169,6 +169,8 @@
     <ClCompile Include="src\Viewports\SceneViewer\Gizmos.cpp" />
     <ClCompile Include="src\Viewports\SceneViewer\SceneViewer.cpp" />
     <ClCompile Include="src\Viewports\SceneViewer\ViewportPanel.cpp" />
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\FileTab.cpp" />
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\MainToolbar.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\3rdParty\glad\glad.h" />
@@ -229,6 +231,8 @@
     <ClInclude Include="include\Viewports\SceneViewer\Gizmos.h" />
     <ClInclude Include="include\Viewports\SceneViewer\SceneViewer.h" />
     <ClInclude Include="include\Viewports\SceneViewer\ViewportPanel.h" />
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\FileTab.h" />
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\MainToolbar.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

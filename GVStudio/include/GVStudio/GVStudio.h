@@ -42,6 +42,7 @@
 #include "Viewports/Panels/LogicUnitRegistryTab.h"
 #include "Viewports/Panels/ResourceDatabaseTab.h"
 #include "Viewports/SceneViewer/ViewportPanel.h"
+#include "Viewports/Toolbars/MainToolbar/MainToolbar.h"
 
 
 #include "SDL3/SDL.h"
@@ -108,6 +109,8 @@ private:
     ResourceDatabaseTab m_resourceTab;
 
     LogicUnitRegistryTab m_logicUnitTab;
+
+    Toolbar m_mainToolbar;
 
     SceneFolder m_rootFolder;
     SceneFolder* m_selectedFolder = &m_rootFolder;
