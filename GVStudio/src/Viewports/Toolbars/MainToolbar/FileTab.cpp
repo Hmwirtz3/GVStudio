@@ -15,9 +15,6 @@ void FileTab::Draw(
     if (!ImGui::BeginMenu("File"))
         return;
 
-    // -----------------------------
-    // Open Project
-    // -----------------------------
     if (ImGui::MenuItem("Open Project"))
     {
         std::string path = WindowsFileDialog::OpenProjectFile();
@@ -62,9 +59,7 @@ void FileTab::Draw(
 
     ImGui::Separator();
 
-    // -----------------------------
-    // Save Scene
-    // -----------------------------
+ 
     if (ImGui::MenuItem("Save Scene"))
     {
         if (!state.currentScene.scenePath.empty())
@@ -80,9 +75,7 @@ void FileTab::Draw(
         }
     }
 
-    // -----------------------------
-    // Save All Scenes
-    // -----------------------------
+  
     if (ImGui::MenuItem("Save All Scenes"))
     {
         std::cout << "[FileTab] Save All Scenes\n";
@@ -97,9 +90,7 @@ void FileTab::Draw(
         }
     }
 
-    // -----------------------------
-    // Save Project
-    // -----------------------------
+  
     if (ImGui::MenuItem("Save Project"))
     {
         std::cout << "[FileTab] Saving Project\n";

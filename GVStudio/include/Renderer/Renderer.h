@@ -4,12 +4,21 @@
 #include <string>
 #include <unordered_map>
 
-struct Mesh
+
+struct SubMesh
 {
     unsigned int vao = 0;
     unsigned int vbo = 0;
+    unsigned int texture = 0;
     int vertexCount = 0;
 };
+
+struct Mesh
+{
+    std::vector<SubMesh> parts;
+};
+
+
 
 class Renderer
 {
@@ -33,6 +42,7 @@ private:
     void CreateBasicShader();
     void CreateGrid();
     void CreateCube();
+
     Mesh LoadOBJ(const std::string& path);
 
 private:
