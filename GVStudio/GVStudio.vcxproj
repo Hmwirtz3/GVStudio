@@ -139,6 +139,10 @@
     <ClCompile Include="src\Database\AssetDatabase.cpp" />
     <ClCompile Include="src\Database\LogicUnitRegistry.cpp" />
     <ClCompile Include="src\Database\ResourceDatabase.cpp" />
+    <ClCompile Include="src\Exporters\ExportContext.cpp" />
+    <ClCompile Include="src\Exporters\Exporter.cpp" />
+    <ClCompile Include="src\Exporters\StaticMeshExporter.cpp" />
+    <ClCompile Include="src\Exporters\TextureDictionary.cpp" />
     <ClCompile Include="src\GVFramework\LogicUnit\LogicUnitParser.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneManager.cpp" />
     <ClCompile Include="src\GVFramework\Scene\SceneObject.cpp" />
@@ -169,6 +173,7 @@
     <ClCompile Include="src\Viewports\SceneViewer\Gizmos.cpp" />
     <ClCompile Include="src\Viewports\SceneViewer\SceneViewer.cpp" />
     <ClCompile Include="src\Viewports\SceneViewer\ViewportPanel.cpp" />
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\ExporterTab.cpp" />
     <ClCompile Include="src\Viewports\Toolbars\MainToolbar\FileTab.cpp" />
     <ClCompile Include="src\Viewports\Toolbars\MainToolbar\MainToolbar.cpp" />
   </ItemGroup>
@@ -178,6 +183,10 @@
     <ClInclude Include="include\Database\AssetDatabase.h" />
     <ClInclude Include="include\Database\LogicUnitRegistry.h" />
     <ClInclude Include="include\Database\ResourceDatabase.h" />
+    <ClInclude Include="include\Exporters\ExportContext.h" />
+    <ClInclude Include="include\Exporters\Exporter.h" />
+    <ClInclude Include="include\Exporters\StaticMeshExporter.h" />
+    <ClInclude Include="include\Exporters\TextureDictionary.h" />
     <ClInclude Include="include\GVFramework\Chunk\Chunk.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnit.h" />
     <ClInclude Include="include\GVFramework\LogicUnit\LogicUnitMacros.h" />
@@ -231,6 +240,7 @@
     <ClInclude Include="include\Viewports\SceneViewer\Gizmos.h" />
     <ClInclude Include="include\Viewports\SceneViewer\SceneViewer.h" />
     <ClInclude Include="include\Viewports\SceneViewer\ViewportPanel.h" />
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\ExporterTab.h" />
     <ClInclude Include="include\Viewports\Toolbars\MainToolbar\FileTab.h" />
     <ClInclude Include="include\Viewports\Toolbars\MainToolbar\MainToolbar.h" />
   </ItemGroup>

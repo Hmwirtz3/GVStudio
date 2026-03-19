@@ -8,6 +8,8 @@
 #include "imgui/imgui_impl_sdl3.h"
 #include "imgui/imgui_impl_opengl3.h"
 
+#include "Exporters/Exporter.h"
+
 #include <filesystem>
 #include <iostream>
 #include <string>
@@ -214,6 +216,30 @@ int GV_STUDIO::RUN()
             m_logicUnitInspectorPanel.Draw(m_selectedObject);
             m_resourceInspectorPanel.Draw(m_state, m_logicUnitRegistry, m_resourceDatabase);
             m_mainToolbar.Draw(m_state, m_sceneManager);
+            if (m_mainToolbar.ConsumeExportRequest())
+            {
+                std::cout << "[App] Export triggered\n";
+
+                std::string outputPath = "export.bin";
+
+                // Build correct project root
+                fs::path projectRoot =
+                    fs::path(m_state.project.projectPath).parent_path();
+
+                // Reset context
+                m_exportContext.Clear();
+
+                // Set BOTH root + resource folder
+                m_exportContext.SetProjectInfo(
+                    projectRoot.string(),
+                    m_state.project.resourceFolder
+                );
+
+                // PASS CONTEXT INTO EXPORTER (CRITICAL)
+                GV_ExportScene(m_sceneManager, outputPath, m_exportContext);
+            }
+
+           
 
             // ***** FIX STARTS HERE *****
 

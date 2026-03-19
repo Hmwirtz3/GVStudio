@@ -160,7 +160,7 @@ std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filenam
             else if (line.find("UI_PARAM_STRING") != std::string::npos)
                 def.type = ParamType::String;
             else if (line.find("UI_PARAM_ASSET") != std::string::npos)
-                def.type = ParamType::String;
+                def.type = ParamType::Asset;
             else if (line.find("UI_EVENT") != std::string::npos)
                 def.type = ParamType::Event;
             else if (line.find("UI_MESSAGE") != std::string::npos)

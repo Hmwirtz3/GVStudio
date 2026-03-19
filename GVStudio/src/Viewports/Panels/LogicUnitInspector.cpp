@@ -68,6 +68,7 @@ void LogicUnitInspectorPanel::Draw(SceneObject* selectedObject)
             case ParamType::String:
             case ParamType::Event:
             case ParamType::Message:
+            case ParamType::Asset:
             {
                 char buffer[256];
                 buffer[0] = 0;

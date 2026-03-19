@@ -246,6 +246,21 @@
     <ClCompile Include="src\Viewports\Toolbars\MainToolbar\MainToolbar.cpp">
       <Filter>Source Files\Viewports\Toolbars\MainToolbar</Filter>
     </ClCompile>
+    <ClCompile Include="src\Exporters\Exporter.cpp">
+      <Filter>Source Files\Exporters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Exporters\StaticMeshExporter.cpp">
+      <Filter>Source Files\Exporters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Exporters\ExportContext.cpp">
+      <Filter>Source Files\Exporters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Exporters\TextureDictionary.cpp">
+      <Filter>Source Files\Exporters</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Viewports\Toolbars\MainToolbar\ExporterTab.cpp">
+      <Filter>Source Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GVStudio\GVStudio.h">
@@ -426,6 +441,21 @@
       <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
     </ClInclude>
     <ClInclude Include="include\Viewports\Toolbars\MainToolbar\MainToolbar.h">
+      <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exporters\Exporter.h">
+      <Filter>Header Files\Exporters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exporters\StaticMeshExporter.h">
+      <Filter>Header Files\Exporters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exporters\ExportContext.h">
+      <Filter>Header Files\Exporters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Exporters\TextureDictionary.h">
+      <Filter>Header Files\Exporters</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Viewports\Toolbars\MainToolbar\ExporterTab.h">
       <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
     </ClInclude>
   </ItemGroup>

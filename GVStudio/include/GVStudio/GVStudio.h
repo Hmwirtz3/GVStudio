@@ -35,6 +35,7 @@
 #include "Database/ResourceDatabase.h"
 
 #include "GVFramework/Scene/SceneManager.h"
+#include "Exporters/ExportContext.h"
 
 #include "Viewports/Panels/LogicUnitInspector.h"
 #include "Viewports/Panels/SceneExplorer.h"
@@ -122,6 +123,8 @@ private:
     SceneObject* m_objectRenaming = nullptr;
 
     SceneFolder* m_newFolderParent = nullptr;
+
+    GV_ExportContext m_exportContext;
 
 
     char m_renameBuffer[256] = {};

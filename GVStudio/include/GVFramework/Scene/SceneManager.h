@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "GVFramework/Scene/SceneObject.h"
 #include "Database/LogicUnitRegistry.h"
@@ -34,9 +35,12 @@ public:
         const std::string& typeName,
         SceneFolder* targetFolder);
 
+    void GatherAllObjects(std::vector<SceneObject*>& outObjects);
+
 private:
     void LoadAllObjects(SceneFolder& folder, const std::string& objectsDir);
     void SaveAllObjects(const SceneFolder& folder, const std::string& objectsDir) const;
+    void GatherRecursive(SceneFolder& folder, std::vector<SceneObject*>& outObjects);
 
 private:
     SceneFolder m_root;

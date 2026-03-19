@@ -107,6 +107,7 @@ namespace ObjectXml
             case ParamType::String:
             case ParamType::Event:
             case ParamType::Message:
+            case ParamType::Asset:
                 pVal.sval = val;
                 break;
 
@@ -171,6 +172,7 @@ namespace ObjectXml
                 case ParamType::String:
                 case ParamType::Event:
                 case ParamType::Message:
+                case ParamType::Asset:
                     v.value = pVal.sval;
                     break;
 

@@ -13,7 +13,8 @@ enum class ParamType
 	String,
 	Separator,
 	Event,
-	Message
+	Message,
+	Asset
 };
 
 struct LU_Param_Def // Params gotten from parser

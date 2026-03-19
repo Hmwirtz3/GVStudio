@@ -33,7 +33,7 @@ std::string SceneManager::GetCurrentSceneDirectory(const GV_State& state) const
 
 bool SceneManager::LoadScene(const std::string& sceneDir)
 {
-    m_root = SceneFolder{}; // reset root
+    m_root = SceneFolder{};
 
     fs::path sceneFile = fs::path(sceneDir) /
         (fs::path(sceneDir).filename().string() + ".gScene");
@@ -153,4 +153,22 @@ SceneObject* SceneManager::CreateObjectFromLogicUnit(
     targetFolder->objects.push_back(std::move(obj));
 
     return ptr;
+}
+
+void SceneManager::GatherAllObjects(std::vector<SceneObject*>& outObjects)
+{
+    GatherRecursive(m_root, outObjects);
+}
+
+void SceneManager::GatherRecursive(SceneFolder& folder, std::vector<SceneObject*>& outObjects)
+{
+    for (auto& obj : folder.objects)
+    {
+        outObjects.push_back(obj.get());
+    }
+
+    for (auto& child : folder.children)
+    {
+        GatherRecursive(*child, outObjects);
+    }
 }
