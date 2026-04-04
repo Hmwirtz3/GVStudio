@@ -43,6 +43,8 @@ void GV_ChunkExporter::Align16()
 
 void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::vector<char>& payload)
 {
+    Align16();
+
     GV_ChunkHeader header{};
     header.type = type;
     header.size = sizeof(GV_ChunkHeader) + static_cast<uint32_t>(payload.size());
@@ -53,6 +55,7 @@ void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::v
     std::cout << "  Size: " << header.size << "\n";
 
     Write(header);
+    Align16();
 
     if (!payload.empty())
         WriteData(payload.data(), payload.size());
@@ -79,7 +82,7 @@ static void ExportObject(
     const GV_ExportContext& ctx);
 
 // ============================================================
-// Entry Point (FIXED)
+// Entry Point
 // ============================================================
 
 bool GV_ExportScene(
@@ -90,7 +93,6 @@ bool GV_ExportScene(
     std::cout << "\n========== EXPORT START ==========\n";
     std::cout << "[Exporter] Output: " << outputPath << "\n";
 
-    // PASS 1
     std::cout << "\n[Exporter] Building context...\n";
     BuildContextFolder(sceneManager.GetRootFolder(), ctx);
 
@@ -101,13 +103,30 @@ bool GV_ExportScene(
     std::cout << "  Textures: " << textures.size() << "\n";
     std::cout << "  Meshes:   " << meshes.size() << "\n";
 
-    // PASS 2
-    GV_ChunkExporter exporter;
+    GV_ChunkExporter scenePayload;
 
-    ExportFolder(sceneManager.GetRootFolder(), exporter, ctx);
+    {
+        std::cout << "\n[Scene] Writing Texture Dictionary\n";
+
+        TextureDictionary dict;
+        auto data = GV_Exporter<TextureDictionary>::Export(dict, ctx);
+
+        scenePayload.WriteData(data.data(), data.size());
+        scenePayload.Align16();
+    }
+
+    ExportFolder(sceneManager.GetRootFolder(), scenePayload, ctx);
+
+    GV_ChunkExporter finalExporter;
+
+    finalExporter.AppendChunk(
+        GV_CHUNK_SCENE,
+        1,
+        scenePayload.buffer
+    );
 
     std::cout << "[Exporter] Final size: "
-        << exporter.buffer.size() << " bytes\n";
+        << finalExporter.buffer.size() << " bytes\n";
 
     std::ofstream out(outputPath, std::ios::binary);
     if (!out)
@@ -116,7 +135,7 @@ bool GV_ExportScene(
         return false;
     }
 
-    out.write(exporter.buffer.data(), exporter.buffer.size());
+    out.write(finalExporter.buffer.data(), finalExporter.buffer.size());
 
     std::cout << "[Exporter] Export complete\n";
     std::cout << "========== EXPORT END ==========\n\n";
@@ -152,11 +171,18 @@ static void BuildContextFolder(
 
                 std::cout << "[Context] " << asset << "\n";
 
-                if (asset.find(".bmp") != std::string::npos)
+                auto extPos = asset.find_last_of('.');
+                if (extPos == std::string::npos)
+                    continue;
+
+                std::string ext = asset.substr(extPos + 1);
+                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+
+                if (ext == "bmp")
                 {
                     ctx.RegisterTexture(asset);
                 }
-                else if (asset.find(".obj") != std::string::npos)
+                else if (ext == "obj")
                 {
                     ctx.RegisterMesh(asset);
                 }
@@ -203,7 +229,7 @@ static void ExportFolder(
 }
 
 // ============================================================
-// OBJECT EXPORT
+// OBJECT EXPORT (NO PARAM TYPES)
 // ============================================================
 
 static void ExportObject(
@@ -224,6 +250,86 @@ static void ExportObject(
     std::cout << "  LogicUnit: " << lu.typeName << "\n";
     std::cout << "  ChunkType: " << lu.chunkType << "\n";
 
+    GV_ChunkExporter objPayload;
+
+    struct ParamPair
+    {
+        const LU_Param_Def* def;
+        const LU_Param_Val* val;
+    };
+
+    std::vector<ParamPair> runtimeParams;
+
+    size_t total = std::min(lu.params.size(), obj.def->values.size());
+
+    // ========================================================
+    // FIX: skip separators ONLY (do NOT change indexing)
+    // ========================================================
+
+    for (size_t i = 0; i < total; i++)
+    {
+        const LU_Param_Def& def = lu.params[i];
+        const LU_Param_Val& val = obj.def->values[i];
+
+        // 🔥 THIS is the only change that matters
+        if (def.type == ParamType::Separator)
+            continue;
+
+        if (def.type == ParamType::Asset)
+            continue;
+
+        runtimeParams.push_back({ &def, &val });
+    }
+
+    uint32_t paramCount = static_cast<uint32_t>(runtimeParams.size());
+
+    std::cout << "  Writing Runtime Params: " << paramCount << "\n";
+
+    objPayload.WriteData(&paramCount, sizeof(uint32_t));
+
+    // ========================================================
+    // WRITE PARAMS (unchanged)
+    // ========================================================
+
+    for (const auto& p : runtimeParams)
+    {
+        switch (p.def->type)
+        {
+        case ParamType::Float:
+            objPayload.WriteData(&p.val->fval, sizeof(float));
+            break;
+
+        case ParamType::Int:
+            objPayload.WriteData(&p.val->ival, sizeof(int));
+            break;
+
+        case ParamType::Bool:
+            objPayload.WriteData(&p.val->bval, sizeof(bool));
+            break;
+
+        case ParamType::String:
+        case ParamType::Event:
+        case ParamType::Message:
+        {
+            uint32_t len = static_cast<uint32_t>(p.val->sval.size());
+            objPayload.WriteData(&len, sizeof(uint32_t));
+
+            if (len > 0)
+                objPayload.WriteData(p.val->sval.data(), len);
+            break;
+        }
+
+        default:
+            break;
+        }
+    }
+
+    objPayload.Align16();
+
+    // ========================================================
+    // STATIC MESH (UNCHANGED — CRITICAL)
+    // ========================================================
+
     switch (lu.chunkType)
     {
     case GV_CHUNK_STATIC_MESH:
@@ -232,9 +338,8 @@ static void ExportObject(
 
         StaticMesh mesh;
 
-        size_t count = std::min(lu.params.size(), obj.def->values.size());
-
-        for (size_t i = 0; i < count; i++)
+        // 🔥 KEEP ORIGINAL INDEXING
+        for (size_t i = 0; i < total; i++)
         {
             const LU_Param_Def& def = lu.params[i];
             const LU_Param_Val& val = obj.def->values[i];
@@ -246,32 +351,30 @@ static void ExportObject(
                 mesh.textureName = val.sval;
         }
 
+        if (mesh.meshName.empty())
+        {
+            std::cout << "  [SKIP] No mesh assigned\n";
+            return;
+        }
+
         auto data = GV_Exporter<StaticMesh>::Export(mesh, ctx);
 
         std::cout << "  Size: " << data.size() << " bytes\n";
 
-        exporter.WriteData(data.data(), data.size());
-        break;
-    }
-
-    case GV_CHUNK_TEXDICTIONARY:
-    {
-        std::cout << "  → TextureDictionary\n";
-
-        TextureDictionary dict;
-
-        auto data = GV_Exporter<TextureDictionary>::Export(dict, ctx);
-
-        std::cout << "  Size: " << data.size() << " bytes\n";
-
-        exporter.WriteData(data.data(), data.size());
+        objPayload.WriteData(data.data(), data.size());
         break;
     }
 
     default:
     {
         std::cout << "  → No exporter\n";
-        break;
+        return;
     }
     }
+
+    exporter.AppendChunk(
+        GV_CHUNK_SCENE_OBJECT,
+        1,
+        objPayload.buffer
+    );
 }

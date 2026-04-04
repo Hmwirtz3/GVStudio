@@ -4,18 +4,29 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 // ============================================================
 // Convert RGBA → RGB565
 // ============================================================
 
-uint16_t ConvertRGBAto565(uint8_t r, uint8_t g, uint8_t b)
+static uint16_t ConvertRGBAto565(uint8_t r, uint8_t g, uint8_t b)
 {
-    return ((r >> 3) << 11) |
+    return ((b >> 3) << 11) |
         ((g >> 2) << 5) |
-        ((b >> 3));
+        ((r >> 3));
 }
 
+// ============================================================
+// PATH HELPERS
+// ============================================================
+
+static bool IsAbsolutePath(const std::string& path)
+{
+    if (path.size() > 2 && path[1] == ':') return true;
+    if (!path.empty() && (path[0] == '/' || path[0] == '\\')) return true;
+    return false;
+}
 
 // ============================================================
 // BMP STRUCTS
@@ -47,12 +58,11 @@ struct BMPInfoHeader
 };
 #pragma pack(pop)
 
-
 // ============================================================
-// BMP Loader (8-bit indexed only)
+// BMP Loader (4bpp + 8bpp)
 // ============================================================
 
-bool LoadImageRGBA(
+static bool LoadImageRGBA(
     const std::string& path,
     int& width,
     int& height,
@@ -77,59 +87,116 @@ bool LoadImageRGBA(
         return false;
     }
 
-    if (info.biBitCount != 8 || info.biCompression != 0)
+    if (info.biCompression != 0)
     {
-        std::cerr << "[BMP] Only 8-bit uncompressed supported: " << path << "\n";
+        std::cerr << "[BMP] Compressed BMP not supported: " << path << "\n";
         return false;
     }
 
     width = info.biWidth;
     height = info.biHeight;
 
-    // ========================================================
-    // READ PALETTE (256 entries)
-    // ========================================================
-
-    struct PaletteEntry
-    {
-        uint8_t b, g, r, a;
-    };
-
-    PaletteEntry palette[256];
-    file.read((char*)palette, sizeof(palette));
-
-    // ========================================================
-    // READ PIXELS
-    // ========================================================
-
-    int rowPadded = (width + 3) & (~3);
-    std::vector<uint8_t> row(rowPadded);
+    std::cout << "[BMP] w=" << width
+        << " h=" << height
+        << " bpp=" << info.biBitCount << "\n";
 
     pixels.resize(width * height * 4);
 
-    file.seekg(header.bfOffBits, std::ios::beg);
+    // ========================================================
+    // 4-bit / 8-bit (PALETTE)
+    // ========================================================
 
-    for (int y = 0; y < height; y++)
+    if (info.biBitCount == 8 || info.biBitCount == 4)
     {
-        file.read((char*)row.data(), rowPadded);
+        struct PaletteEntry { uint8_t b, g, r, a; };
 
-        for (int x = 0; x < width; x++)
+        int paletteSize = (info.biBitCount == 8) ? 256 : 16;
+
+        std::vector<PaletteEntry> palette(paletteSize);
+        file.read((char*)palette.data(), paletteSize * sizeof(PaletteEntry));
+
+        int rowPadded = (info.biBitCount == 8)
+            ? (width + 3) & (~3)
+            : ((width + 1) / 2 + 3) & (~3);
+
+        std::vector<uint8_t> row(rowPadded);
+
+        file.seekg(header.bfOffBits, std::ios::beg);
+
+        for (int y = 0; y < height; y++)
         {
-            uint8_t index = row[x];
-            const auto& p = palette[index];
+            file.read((char*)row.data(), rowPadded);
 
-            int dst = ((height - 1 - y) * width + x) * 4;
+            for (int x = 0; x < width; x++)
+            {
+                uint8_t index = 0;
 
-            pixels[dst + 0] = p.r;
-            pixels[dst + 1] = p.g;
-            pixels[dst + 2] = p.b;
-            pixels[dst + 3] = 255;
+                if (info.biBitCount == 8)
+                {
+                    index = row[x];
+                }
+                else
+                {
+                    uint8_t byte = row[x / 2];
+                    index = (x % 2 == 0)
+                        ? (byte >> 4) & 0x0F
+                        : byte & 0x0F;
+                }
+
+                const auto& p = palette[index];
+
+                int dst = ((height - 1 - y) * width + x) * 4;
+
+                pixels[dst + 0] = p.r;
+                pixels[dst + 1] = p.g;
+                pixels[dst + 2] = p.b;
+                pixels[dst + 3] = 255;
+            }
         }
+
+        return true;
     }
 
-    return true;
-}
+    // ========================================================
+    // 🔥 24-BIT SUPPORT (THIS IS THE FIX)
+    // ========================================================
 
+    if (info.biBitCount == 24)
+    {
+        int rowPadded = (width * 3 + 3) & (~3);
+        std::vector<uint8_t> row(rowPadded);
+
+        file.seekg(header.bfOffBits, std::ios::beg);
+
+        for (int y = 0; y < height; y++)
+        {
+            file.read((char*)row.data(), rowPadded);
+
+            for (int x = 0; x < width; x++)
+            {
+                uint8_t b = row[x * 3 + 0];
+                uint8_t g = row[x * 3 + 1];
+                uint8_t r = row[x * 3 + 2];
+
+                int dst = ((height - 1 - y) * width + x) * 4;
+
+                pixels[dst + 0] = r;
+                pixels[dst + 1] = g;
+                pixels[dst + 2] = b;
+                pixels[dst + 3] = 255;
+            }
+        }
+
+        return true;
+    }
+
+    // ========================================================
+    // UNSUPPORTED
+    // ========================================================
+
+    std::cerr << "[BMP] Unsupported BPP: " << info.biBitCount << "\n";
+    return false;
+}
 
 // ============================================================
 // Exporter Implementation
@@ -137,10 +204,12 @@ bool LoadImageRGBA(
 
 void GV_Exporter<TextureDictionary>::Build(
     const TextureDictionary&,
-    GV_ChunkExporter& exporter,
+    GV_ChunkExporter& out,
     const GV_ExportContext& ctx)
 {
     const auto& textures = ctx.GetTextures();
+
+    std::cout << "\n[TextureDictionary] Count: " << textures.size() << "\n";
 
     for (uint32_t i = 0; i < textures.size(); i++)
     {
@@ -150,21 +219,18 @@ void GV_Exporter<TextureDictionary>::Build(
         int height = 0;
         std::vector<uint8_t> rgba;
 
-        // Use proper path resolution
-        std::string fullPath = ctx.ResolvePath(name);
+        std::string fullPath = IsAbsolutePath(name)
+            ? name
+            : ctx.ResolvePath(name);
 
         if (!LoadImageRGBA(fullPath, width, height, rgba))
         {
-            std::cerr << "[Texture] Failed to load: " << fullPath << "\n";
+            std::cerr << "[Texture] Failed: " << fullPath << "\n";
             continue;
         }
 
-        // ====================================================
-        // Convert to RGB565
-        // ====================================================
-
-        std::vector<uint16_t> pixels565;
-        pixels565.resize(width * height);
+        // Convert → RGB565
+        std::vector<uint16_t> pixels565(width * height);
 
         for (int p = 0; p < width * height; p++)
         {
@@ -175,28 +241,34 @@ void GV_Exporter<TextureDictionary>::Build(
             pixels565[p] = ConvertRGBAto565(r, g, b);
         }
 
-        // ====================================================
-        // TEXTURE CHUNK
-        // ====================================================
+        // ----------------------------------------
+        // BUILD TEXTURE CHUNK PAYLOAD
+        // ----------------------------------------
 
-        GV_ChunkExporter sub;
+        GV_ChunkExporter texPayload;
 
-        uint32_t textureID = i;
+        uint32_t textureID = i + 1 ;
         uint32_t format = 0; // RGB565
+        uint32_t dataSize = (uint32_t)(pixels565.size() * sizeof(uint16_t));
 
-        sub.Write(textureID);
-        sub.Write((uint32_t)width);
-        sub.Write((uint32_t)height);
-        sub.Write(format);
+        texPayload.Write(textureID);
+        texPayload.Write((uint32_t)width);
+        texPayload.Write((uint32_t)height);
+        texPayload.Write(format);
+        texPayload.Write(dataSize);
+        texPayload.WriteData(pixels565.data(), dataSize);
 
-        sub.WriteData(
-            pixels565.data(),
-            pixels565.size() * sizeof(uint16_t));
+        // ----------------------------------------
+        // APPEND AS CHILD CHUNK
+        // ----------------------------------------
 
-        exporter.AppendChunk(GV_CHUNK_TEXTURE, 1, sub.buffer);
+        out.AppendChunk(
+            GV_CHUNK_TEXTURE_NATIVE,
+            1,
+            texPayload.buffer
+        );
     }
 }
-
 
 // ============================================================
 // Chunk Type

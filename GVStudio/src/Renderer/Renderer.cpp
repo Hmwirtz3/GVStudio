@@ -39,6 +39,17 @@ static unsigned int LoadBMPTexture(const std::string& path)
 
     if (fread(header, 1, 54, f) != 54)
     {
+        std::cout << "[BMP] Failed to read header: " << path << "\n";
+        fclose(f);
+        return 0;
+    }
+
+    // ========================================================
+    // CRITICAL: Validate BMP signature
+    // ========================================================
+    if (header[0] != 'B' || header[1] != 'M')
+    {
+        std::cout << "[BMP] Not a BMP file: " << path << "\n";
         fclose(f);
         return 0;
     }
@@ -48,24 +59,61 @@ static unsigned int LoadBMPTexture(const std::string& path)
     int height = *(int*)&header[22];
     int bpp = *(short*)&header[28];
 
+    // ========================================================
+    // CRITICAL: Sanity checks
+    // ========================================================
+    if (width <= 0 || height <= 0)
+    {
+        std::cout << "[BMP] Invalid dimensions: " << path << "\n";
+        fclose(f);
+        return 0;
+    }
+
+    if (bpp != 4 && bpp != 8 && bpp != 24 && bpp != 32)
+    {
+        std::cout << "[BMP] Unsupported bpp (" << bpp << "): " << path << "\n";
+        fclose(f);
+        return 0;
+    }
+
     std::cout << "[BMP] w=" << width << " h=" << height << " bpp=" << bpp << "\n";
 
     std::vector<unsigned char> rgbData;
 
-
-
+    // ========================================================
+    // INDEXED (4/8 bit)
+    // ========================================================
     if (bpp == 8 || bpp == 4)
     {
         int paletteEntries = (bpp == 8) ? 256 : 16;
 
         std::vector<unsigned char> palette(paletteEntries * 4);
-        fread(palette.data(), 1, paletteEntries * 4, f);
+        if (fread(palette.data(), 1, paletteEntries * 4, f) != palette.size())
+        {
+            std::cout << "[BMP] Failed to read palette: " << path << "\n";
+            fclose(f);
+            return 0;
+        }
 
         int rowSize = ((width * bpp + 31) / 32) * 4;
+
+        if (rowSize <= 0)
+        {
+            std::cout << "[BMP] Invalid row size: " << path << "\n";
+            fclose(f);
+            return 0;
+        }
+
         std::vector<unsigned char> indexData(rowSize * height);
 
         fseek(f, dataOffset, SEEK_SET);
-        fread(indexData.data(), 1, rowSize * height, f);
+
+        if (fread(indexData.data(), 1, indexData.size(), f) != indexData.size())
+        {
+            std::cout << "[BMP] Failed to read pixel data: " << path << "\n";
+            fclose(f);
+            return 0;
+        }
 
         rgbData.resize(width * height * 3);
 
@@ -73,21 +121,20 @@ static unsigned int LoadBMPTexture(const std::string& path)
         {
             for (int x = 0; x < width; x++)
             {
-                int idx;
+                int idx = 0;
 
                 if (bpp == 8)
                 {
                     idx = indexData[y * rowSize + x];
                 }
-                else
+                else // 4-bit
                 {
                     unsigned char byte = indexData[y * rowSize + (x / 2)];
-
-                    if (x % 2 == 0)
-                        idx = byte >> 4;
-                    else
-                        idx = byte & 0x0F;
+                    idx = (x % 2 == 0) ? (byte >> 4) : (byte & 0x0F);
                 }
+
+                if (idx < 0 || idx >= paletteEntries)
+                    idx = 0;
 
                 unsigned char b = palette[idx * 4 + 0];
                 unsigned char g = palette[idx * 4 + 1];
@@ -101,20 +148,31 @@ static unsigned int LoadBMPTexture(const std::string& path)
             }
         }
     }
-
-    /*===========================================================
-    24/32 BIT BMP
-    ===========================================================*/
-
     else
     {
+        // ====================================================
+        // 24 / 32 bit
+        // ====================================================
         int bytesPerPixel = bpp / 8;
         int rowSize = ((width * bytesPerPixel + 3) / 4) * 4;
+
+        if (rowSize <= 0)
+        {
+            std::cout << "[BMP] Invalid row size: " << path << "\n";
+            fclose(f);
+            return 0;
+        }
 
         std::vector<unsigned char> raw(rowSize * height);
 
         fseek(f, dataOffset, SEEK_SET);
-        fread(raw.data(), 1, rowSize * height, f);
+
+        if (fread(raw.data(), 1, raw.size(), f) != raw.size())
+        {
+            std::cout << "[BMP] Failed to read pixel data: " << path << "\n";
+            fclose(f);
+            return 0;
+        }
 
         rgbData.resize(width * height * bytesPerPixel);
 
@@ -129,6 +187,12 @@ static unsigned int LoadBMPTexture(const std::string& path)
     }
 
     fclose(f);
+    
+    if (rgbData.empty())
+    {
+        std::cout << "[BMP] No image data: " << path << "\n";
+        return 0;
+    }
 
     GLuint tex;
     glGenTextures(1, &tex);
@@ -139,7 +203,6 @@ static unsigned int LoadBMPTexture(const std::string& path)
     GLenum format = GL_RGB;
     if (bpp == 32) format = GL_BGRA;
     else if (bpp == 24) format = GL_BGR;
-    else if (bpp == 8)  format = GL_RGB;
 
     glTexImage2D(
         GL_TEXTURE_2D,
@@ -218,9 +281,21 @@ ParseMTLTextures(const std::string& path)
         else if (type == "map_Kd")
         {
             std::string tex;
-            ss >> tex;
 
-            fs::path texPath = fs::path(path).parent_path() / tex;
+            // Read full remainder of line (handles spaces)
+            std::getline(ss, tex);
+
+            // FULL trim (leading + trailing whitespace)
+            tex.erase(0, tex.find_first_not_of(" \t\r\n"));
+            tex.erase(tex.find_last_not_of(" \t\r\n") + 1);
+
+            fs::path texPath(tex);
+
+            // Only prepend MTL directory if path is relative
+            if (!texPath.is_absolute())
+            {
+                texPath = fs::path(path).parent_path() / texPath;
+            }
 
             unsigned int texID = LoadBMPTexture(texPath.string());
 

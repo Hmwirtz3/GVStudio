@@ -1,9 +1,42 @@
-﻿#include "Exporters/ExportContext.h"
+﻿#define _CRT_SECURE_NO_WARNINGS
+#include "Exporters/ExportContext.h"
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <map>
+#include <cstdio>
+
+// ============================================================
+// PATH HELPERS
+// ============================================================
+
+static bool IsAbsolutePath(const std::string& path)
+{
+    if (path.size() > 2 && path[1] == ':') return true;
+    if (!path.empty() && (path[0] == '/' || path[0] == '\\')) return true;
+    return false;
+}
+
+static bool FileExists(const std::string& path)
+{
+    FILE* f = fopen(path.c_str(), "rb");
+    if (f)
+    {
+        fclose(f);
+        return true;
+    }
+    return false;
+}
+
+static bool IsSupportedTexture(const std::string& path)
+{
+    std::string lower = path;
+    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+    return (lower.find(".bmp") != std::string::npos);
+}
 
 // ============================================================
 // SETTERS
@@ -27,23 +60,12 @@ void GV_ExportContext::SetProjectInfo(
 
 std::string GV_ExportContext::ResolvePath(const std::string& path) const
 {
-    std::cout << "\n[ResolvePath]\n";
-    std::cout << "  Input: " << path << "\n";
-    std::cout << "  ProjectRoot: " << m_projectRoot << "\n";
-    std::cout << "  ResourceFolder: " << m_resourceFolder << "\n";
-
     if (path.empty())
         return "";
 
-    // Absolute path → return as-is
-    if (path.find(':') != std::string::npos ||
-        path[0] == '/' || path[0] == '\\')
-    {
-        std::cout << "  Absolute path, using as-is\n";
+    if (IsAbsolutePath(path))
         return path;
-    }
 
-    // Build: projectRoot + resourceFolder + relative asset path
     std::string full = m_projectRoot;
 
     if (!full.empty() && full.back() != '/' && full.back() != '\\')
@@ -61,8 +83,6 @@ std::string GV_ExportContext::ResolvePath(const std::string& path) const
 
     std::replace(full.begin(), full.end(), '\\', '/');
 
-    std::cout << "  Resolved: " << full << "\n";
-
     return full;
 }
 
@@ -75,7 +95,7 @@ std::string GV_ExportContext::GetDirectory(const std::string& path) const
 }
 
 // ============================================================
-// TEXTURES
+// TEXTURES (FIXED)
 // ============================================================
 
 uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
@@ -83,16 +103,33 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     if (name.empty())
         return 0;
 
-    auto it = textureMap.find(name);
+    std::string resolved = ResolvePath(name);
+
+    // 🔥 VALIDATION FIRST
+    if (!FileExists(resolved))
+    {
+        std::cout << "[Texture] SKIP (missing): " << resolved << "\n";
+        return 0;
+    }
+
+    if (!IsSupportedTexture(resolved))
+    {
+        std::cout << "[Texture] SKIP (unsupported): " << resolved << "\n";
+        return 0;
+    }
+
+    // Already registered?
+    auto it = textureMap.find(resolved);
     if (it != textureMap.end())
         return it->second;
 
-    uint32_t id = (uint32_t)textures.size();
+    // IDs start at 1 (0 = no texture)
+    uint32_t id = (uint32_t)textures.size() + 1;
 
-    textures.push_back(name);
-    textureMap[name] = id;
+    textures.push_back(resolved);
+    textureMap[resolved] = id;
 
-    std::cout << "[Texture] " << name << " ID=" << id << "\n";
+    std::cout << "[Texture] OK: " << resolved << " ID=" << id << "\n";
 
     return id;
 }
@@ -132,8 +169,6 @@ uint32_t GV_ExportContext::RegisterMesh(const std::string& name)
 
     meshes.push_back(name);
     meshMap[name] = id;
-
-    std::cout << "[Mesh] " << name << "\n";
 
     GV_MeshData data;
 
@@ -189,6 +224,7 @@ bool GV_ExportContext::LoadMTL(
 
     std::string line;
     std::string currentMat;
+    std::string directory = GetDirectory(path);
 
     while (std::getline(file, line))
     {
@@ -203,17 +239,27 @@ bool GV_ExportContext::LoadMTL(
         else if (type == "map_Kd")
         {
             std::string tex;
-            ss >> tex;
+            std::getline(ss, tex);
+
+            // trim leading space
+            if (!tex.empty() && tex[0] == ' ')
+                tex.erase(0, 1);
+
+            if (!IsAbsolutePath(tex))
+                tex = directory + tex;
+
+            std::replace(tex.begin(), tex.end(), '\\', '/');
+
             materialToTex[currentMat] = tex;
         }
     }
 
-    std::cout << "[MTL] Loaded: " << path << "\n";
     return true;
 }
 
+
 // ============================================================
-// LOAD OBJ
+// LOAD OBJ (FIXED)
 // ============================================================
 
 bool GV_ExportContext::LoadOBJ(const std::string& inputPath, GV_MeshData& out)
@@ -223,20 +269,16 @@ bool GV_ExportContext::LoadOBJ(const std::string& inputPath, GV_MeshData& out)
     std::ifstream file(path);
     if (!file.is_open())
     {
-        std::cout << "[OBJ] FAILED TO OPEN: " << path << "\n";
+        std::cout << "[OBJ] FAILED: " << path << "\n";
         return false;
     }
 
-    std::vector<float> pos;
-    std::vector<float> norm;
-    std::vector<float> uv;
-
+    std::vector<float> pos, norm, uv;
     std::unordered_map<std::string, std::string> materialToTex;
-    std::unordered_map<std::string, GV_Submesh> submeshMap;
+    std::map<std::string, GV_Submesh> submeshMap;
 
     std::string currentMat = "default";
     std::string mtlFile;
-
     std::string baseDir = GetDirectory(path);
 
     std::string line;
@@ -279,7 +321,6 @@ bool GV_ExportContext::LoadOBJ(const std::string& inputPath, GV_MeshData& out)
             ss >> v0 >> v1 >> v2;
 
             GV_Submesh& sm = submeshMap[currentMat];
-
             std::string verts[3] = { v0, v1, v2 };
 
             for (int i = 0; i < 3; i++)
@@ -287,29 +328,22 @@ bool GV_ExportContext::LoadOBJ(const std::string& inputPath, GV_MeshData& out)
                 int pi, ti, ni;
                 ParseFaceVertex(verts[i], pi, ti, ni);
 
-                GV_Vertex v{};
+                if (pi <= 0) continue;
 
-                if (pi > 0)
-                {
-                    int p = (pi - 1) * 3;
-                    v.x = pos[p + 0];
-                    v.y = pos[p + 1];
-                    v.z = pos[p + 2];
-                }
+                GV_Vertex v;
+
+                int p = (pi - 1) * 3;
+                v.x = pos[p + 0];
+                v.y = pos[p + 1];
+                v.z = pos[p + 2];
+
+                v.u = v.v = 0.0f;
 
                 if (ti > 0 && !uv.empty())
                 {
                     int t = (ti - 1) * 2;
                     v.u = uv[t + 0];
                     v.v = 1.0f - uv[t + 1];
-                }
-
-                if (ni > 0 && !norm.empty())
-                {
-                    int n = (ni - 1) * 3;
-                    v.nx = norm[n + 0];
-                    v.ny = norm[n + 1];
-                    v.nz = norm[n + 2];
                 }
 
                 sm.vertices.push_back(v);
@@ -319,28 +353,38 @@ bool GV_ExportContext::LoadOBJ(const std::string& inputPath, GV_MeshData& out)
     }
 
     if (!mtlFile.empty())
-    {
         LoadMTL(baseDir + mtlFile, materialToTex);
-    }
 
+    // Assign textures SAFELY
     for (auto& pair : submeshMap)
     {
         GV_Submesh& sm = pair.second;
 
         std::string tex;
-
         auto texIt = materialToTex.find(pair.first);
         if (texIt != materialToTex.end())
+            tex = texIt->second;
+
+        if (tex.empty())
         {
-            tex = baseDir + texIt->second;
+            sm.textureID = 0;
         }
+        else
+        {
+            std::string resolved = ResolvePath(tex);
 
-        sm.textureID = tex.empty() ? 0 : RegisterTexture(tex);
-
+            // 🔥 FILTER HERE FIRST
+            if (resolved.find(".bmp") == std::string::npos)
+            {
+                sm.textureID = 0;
+            }
+            else
+            {
+                sm.textureID = RegisterTexture(tex);
+            }
+        }
         out.submeshes.push_back(sm);
     }
-
-    std::cout << "[OBJ] Loaded OK: " << path << "\n";
 
     return true;
 }
@@ -353,7 +397,6 @@ void GV_ExportContext::Clear()
 {
     textureMap.clear();
     textures.clear();
-
     meshMap.clear();
     meshes.clear();
     meshData.clear();

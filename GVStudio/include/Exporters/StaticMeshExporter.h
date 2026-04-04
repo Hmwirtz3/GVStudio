@@ -14,9 +14,10 @@
 #pragma pack(push, 1)
 struct PSPVertex
 {
-    int16_t x, y, z;
+    
     int16_t u, v;
     uint32_t color;
+    float x, y, z;
 };
 #pragma pack(pop)
 
@@ -36,8 +37,8 @@ struct StaticMesh
     std::vector<Vertex> vertices;
     std::vector<uint16_t> indices;
 
-    std::string meshName;     // 🔥 used for ID resolution
-    std::string textureName;  // 🔥 used for ID resolution
+    std::string meshName;     
+    std::string textureName; 
 };
 
 
