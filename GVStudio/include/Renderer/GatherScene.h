@@ -8,11 +8,25 @@
 struct SceneFolder;
 class SceneObject;
 
+enum class RenderItemType
+{
+    Mesh,
+    CameraGizmo
+};
+
 struct RenderItem
 {
-    Mat4 model;
+    SceneObject* object = nullptr;
+
+  
+    Mat4 model{};
     std::string modelPath;
-    SceneObject* object;
+
+    RenderItemType type = RenderItemType::Mesh;
+
+   
+    Vec3 camPos{ 0,0,0 };
+    Vec3 camRot{ 0,0,0 };
 };
 
 class GatherScene
@@ -30,4 +44,9 @@ private:
     static Mat4 BuildModelFromLogicUnit(GV_Logic_Unit_Instance* inst,
         const std::string& resourceRoot,
         std::string& outModelPath);
+
+    static void ExtractCameraFromLogicUnit(
+        GV_Logic_Unit_Instance* inst,
+        Vec3& outPos,
+        Vec3& outRot);
 };

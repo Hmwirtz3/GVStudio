@@ -10,9 +10,7 @@
 #include <iostream>
 #include <algorithm>
 
-// ============================================================
-// GV_ChunkExporter Implementation
-// ============================================================
+
 
 void GV_ChunkExporter::WriteData(const void* data, size_t size)
 {
@@ -63,9 +61,7 @@ void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::v
     Align16();
 }
 
-// ============================================================
-// Forward Declarations
-// ============================================================
+
 
 static void BuildContextFolder(
     const SceneFolder& folder,
@@ -81,9 +77,7 @@ static void ExportObject(
     GV_ChunkExporter& exporter,
     const GV_ExportContext& ctx);
 
-// ============================================================
-// Entry Point
-// ============================================================
+
 
 bool GV_ExportScene(
     const SceneManager& sceneManager,
@@ -143,9 +137,6 @@ bool GV_ExportScene(
     return true;
 }
 
-// ============================================================
-// PASS 1: CONTEXT BUILD
-// ============================================================
 
 static void BuildContextFolder(
     const SceneFolder& folder,
@@ -197,9 +188,7 @@ static void BuildContextFolder(
     }
 }
 
-// ============================================================
-// PASS 2: EXPORT
-// ============================================================
+
 
 static void ExportFolder(
     const SceneFolder& folder,
@@ -228,9 +217,7 @@ static void ExportFolder(
     }
 }
 
-// ============================================================
-// OBJECT EXPORT (NO PARAM TYPES)
-// ============================================================
+
 
 static void ExportObject(
     const SceneObject& obj,
@@ -250,7 +237,11 @@ static void ExportObject(
     std::cout << "  LogicUnit: " << lu.typeName << "\n";
     std::cout << "  ChunkType: " << lu.chunkType << "\n";
 
+    // 🔥 SceneObject payload (container)
     GV_ChunkExporter objPayload;
+
+    // 🔥 Inner LogicUnit chunk payload
+    GV_ChunkExporter innerPayload;
 
     struct ParamPair
     {
@@ -262,16 +253,11 @@ static void ExportObject(
 
     size_t total = std::min(lu.params.size(), obj.def->values.size());
 
-    // ========================================================
-    // FIX: skip separators ONLY (do NOT change indexing)
-    // ========================================================
-
     for (size_t i = 0; i < total; i++)
     {
         const LU_Param_Def& def = lu.params[i];
         const LU_Param_Val& val = obj.def->values[i];
 
-        // 🔥 THIS is the only change that matters
         if (def.type == ParamType::Separator)
             continue;
 
@@ -285,26 +271,22 @@ static void ExportObject(
 
     std::cout << "  Writing Runtime Params: " << paramCount << "\n";
 
-    objPayload.WriteData(&paramCount, sizeof(uint32_t));
-
-    // ========================================================
-    // WRITE PARAMS (unchanged)
-    // ========================================================
+    innerPayload.WriteData(&paramCount, sizeof(uint32_t));
 
     for (const auto& p : runtimeParams)
     {
         switch (p.def->type)
         {
         case ParamType::Float:
-            objPayload.WriteData(&p.val->fval, sizeof(float));
+            innerPayload.WriteData(&p.val->fval, sizeof(float));
             break;
 
         case ParamType::Int:
-            objPayload.WriteData(&p.val->ival, sizeof(int));
+            innerPayload.WriteData(&p.val->ival, sizeof(int));
             break;
 
         case ParamType::Bool:
-            objPayload.WriteData(&p.val->bval, sizeof(bool));
+            innerPayload.WriteData(&p.val->bval, sizeof(bool));
             break;
 
         case ParamType::String:
@@ -312,10 +294,10 @@ static void ExportObject(
         case ParamType::Message:
         {
             uint32_t len = static_cast<uint32_t>(p.val->sval.size());
-            objPayload.WriteData(&len, sizeof(uint32_t));
+            innerPayload.WriteData(&len, sizeof(uint32_t));
 
             if (len > 0)
-                objPayload.WriteData(p.val->sval.data(), len);
+                innerPayload.WriteData(p.val->sval.data(), len);
             break;
         }
 
@@ -324,12 +306,9 @@ static void ExportObject(
         }
     }
 
-    objPayload.Align16();
+    innerPayload.Align16();
 
-    // ========================================================
-    // STATIC MESH (UNCHANGED — CRITICAL)
-    // ========================================================
-
+    // 🔥 Payload handling (unchanged logic)
     switch (lu.chunkType)
     {
     case GV_CHUNK_STATIC_MESH:
@@ -338,7 +317,6 @@ static void ExportObject(
 
         StaticMesh mesh;
 
-        // 🔥 KEEP ORIGINAL INDEXING
         for (size_t i = 0; i < total; i++)
         {
             const LU_Param_Def& def = lu.params[i];
@@ -361,17 +339,25 @@ static void ExportObject(
 
         std::cout << "  Size: " << data.size() << " bytes\n";
 
-        objPayload.WriteData(data.data(), data.size());
+        innerPayload.WriteData(data.data(), data.size());
         break;
     }
 
     default:
     {
-        std::cout << "  → No exporter\n";
-        return;
+        std::cout << "  → No exporter (param-only chunk)\n";
+        break;
     }
     }
 
+    // 🔥 Wrap LogicUnit in FULL chunk header
+    objPayload.AppendChunk(
+        lu.chunkType,
+        1,
+        innerPayload.buffer
+    );
+
+    // 🔥 Wrap SceneObject (unchanged)
     exporter.AppendChunk(
         GV_CHUNK_SCENE_OBJECT,
         1,

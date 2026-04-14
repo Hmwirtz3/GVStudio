@@ -1,4 +1,4 @@
-#include "GVFramework/LogicUnit/LogicUnitParser.h"
+﻿#include "GVFramework/LogicUnit/LogicUnitParser.h"
 #include "GVFramework/Chunk/Chunk.h"
 
 #include <fstream>
@@ -6,20 +6,74 @@
 #include <iostream>
 #include <algorithm>
 #include <cctype>
+#include <unordered_map>
 
+
+// 🔥 NEW: full chunk type lookup table
 static GV_ChunkType ParseChunkType(const std::string& s)
 {
-    if (s == "GV_CHUNK_TEXTURE")
-        return GV_ChunkType::GV_CHUNK_TEXTURE;
+    static const std::unordered_map<std::string, GV_ChunkType> map =
+    {
+        { "GV_CHUNK_STRUCT", GV_CHUNK_STRUCT },
+        { "GV_CHUNK_STRING", GV_CHUNK_STRING },
+        { "GV_CHUNK_EXTENSION", GV_CHUNK_EXTENSION },
+        { "GV_CHUNK_LOGIC_UNIT", GV_CHUNK_LOGIC_UNIT },
+        { "GV_CHUNK_SCENE_OBJECT", GV_CHUNK_SCENE_OBJECT },
+        { "GV_CHUNK_SCENE", GV_CHUNK_SCENE },
 
-    if (s == "GV_CHUNK_HEIGHTMAP")
-        return GV_ChunkType::GV_CHUNK_HEIGHTMAP;
+        { "GV_CHUNK_CAMERA", GV_CHUNK_CAMERA },
+        { "GV_CHUNK_TEXTURE", GV_CHUNK_TEXTURE },
+        { "GV_CHUNK_MATERIAL", GV_CHUNK_MATERIAL },
+        { "GV_CHUNK_MATERIAL_LIST", GV_CHUNK_MATERIAL_LIST },
+        { "GV_CHUNK_ATOMIC_SECT", GV_CHUNK_ATOMIC_SECT },
+        { "GV_CHUNK_PLANE_SECT", GV_CHUNK_PLANE_SECT },
 
-    if (s == "GV_CHUNK_STATIC_MESH")
-        return GV_ChunkType::GV_CHUNK_STATIC_MESH;
+        { "GV_CHUNK_WORLD", GV_CHUNK_WORLD },
+        { "GV_CHUNK_SPLINE", GV_CHUNK_SPLINE },
+        { "GV_CHUNK_MATRIX", GV_CHUNK_MATRIX },
+        { "GV_CHUNK_FRAME_LIST", GV_CHUNK_FRAME_LIST },
+        { "GV_CHUNK_GEOMETRY", GV_CHUNK_GEOMETRY },
+        { "GV_CHUNK_CLUMP", GV_CHUNK_CLUMP },
+        { "GV_CHUNK_HEIGHTMAP", GV_CHUNK_HEIGHTMAP },
+        { "GV_CHUNK_STATIC_MESH", GV_CHUNK_STATIC_MESH },
 
-    return GV_ChunkType::GV_CHUNK_UNKNOWN;
+        { "GV_CHUNK_LIGHT", GV_CHUNK_LIGHT },
+        { "GV_CHUNK_UNICODE_STRING", GV_CHUNK_UNICODE_STRING },
+        { "GV_CHUNK_ATOMIC", GV_CHUNK_ATOMIC },
+        { "GV_CHUNK_TEXTURE_NATIVE", GV_CHUNK_TEXTURE_NATIVE },
+        { "GV_CHUNK_TEXDICTIONARY", GV_CHUNK_TEXDICTIONARY },
+        { "GV_CHUNK_ANIMDATABASE", GV_CHUNK_ANIMDATABASE },
+        { "GV_CHUNK_IMAGE", GV_CHUNK_IMAGE },
+
+        { "GV_CHUNK_WORLD_SECTOR", GV_CHUNK_WORLD_SECTOR },
+        { "GV_CHUNK_VERT_NORMALS", GV_CHUNK_VERT_NORMALS },
+        { "GV_CHUNK_LIGHT_ATOMICS", GV_CHUNK_LIGHT_ATOMICS },
+        { "GV_CHUNK_COLLISION_MESH", GV_CHUNK_COLLISION_MESH },
+
+        { "GV_CHUNK_GEOMETRY_LIST", GV_CHUNK_GEOMETRY_LIST },
+        { "GV_CHUNK_SKIN_PLG", GV_CHUNK_SKIN_PLG },
+        { "GV_CHUNK_HANIM_PLG", GV_CHUNK_HANIM_PLG },
+
+        { "GV_CHUNK_BIN_MESH_PLG", GV_CHUNK_BIN_MESH_PLG },
+        { "GV_CHUNK_NATIVEDATA_PLG", GV_CHUNK_NATIVEDATA_PLG },
+        { "GV_CHUNK_MORPH_PLG", GV_CHUNK_MORPH_PLG },
+
+        { "GV_CHUNK_PSA", GV_CHUNK_PSA },
+        { "GV_CHUNK_TOOL_PLG", GV_CHUNK_TOOL_PLG },
+        { "GV_CHUNK_USERDATA_PLG", GV_CHUNK_USERDATA_PLG },
+        { "GV_CHUNK_RIGHTTORENDER_PLG", GV_CHUNK_RIGHTTORENDER_PLG },
+
+        { "GV_CHUNK_TERMINATOR", GV_CHUNK_TERMINATOR }
+    };
+
+    auto it = map.find(s);
+    if (it != map.end())
+        return it->second;
+
+    std::cout << "[Parser] Unknown chunk type: " << s << "\n";
+    return GV_CHUNK_UNKNOWN;
 }
+
 
 std::string LogicUnitParser::Trim(const std::string& str)
 {
@@ -81,7 +135,8 @@ std::vector<GV_Logic_Unit> LogicUnitParser::ParseFile(const std::string& filenam
 
         std::cout << "--------------------------------------\n";
         std::cout << "[Parser] Found Logic Unit: " << unit.typeName << "\n";
-        std::cout << "[Parser] Chunk Type: " << chunkStr << "\n";
+        std::cout << "[Parser] Chunk Type: " << chunkStr
+            << " -> " << std::hex << unit.chunkType << std::dec << "\n";
 
         const size_t bodyStart = nameEnd + 1;
         const size_t bodyEnd = content.find("END_LOGIC_UNIT", bodyStart);

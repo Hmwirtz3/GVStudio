@@ -78,13 +78,20 @@ void SceneViewer::Render(SceneFolder& scene,
 
     for (const auto& item : items)
     {
-        if (!item.modelPath.empty())
+        if (item.type == RenderItemType::Mesh)
         {
-            bool isSelected = (item.object == selectedObject);
-
-            m_renderer.DrawModel(
-                item.modelPath,
-                item.model);
+            if (!item.modelPath.empty())
+            {
+                m_renderer.DrawModel(
+                    item.modelPath,
+                    item.model);
+            }
+        }
+        else if (item.type == RenderItemType::CameraGizmo)
+        {
+            m_renderer.DrawCameraGizmo(
+                item.camPos,
+                item.camRot);
         }
     }
 

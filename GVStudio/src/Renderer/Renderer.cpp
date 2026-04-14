@@ -22,6 +22,69 @@ struct Vec2
     Vec2(float _x, float _y) : x(_x), y(_y) {}
 };
 
+void Renderer::DrawCameraGizmo(const Vec3& pos, const Vec3& rot)
+{
+    Mat4 model =
+        Translate(pos) *
+        RotateY(rot.y) *
+        RotateX(rot.x) *
+        Scale({ 2.0f, 2.0f, 2.0f });
+
+    DrawCube(model);
+
+    Vec3 forward =
+    {
+        -sinf(rot.y) * cosf(rot.x),
+        -sinf(rot.x),
+        -cosf(rot.y) * cosf(rot.x)
+    };
+
+    Vec3 start = pos;
+    Vec3 end =
+    {
+        pos.x + forward.x * 8.0f,
+        pos.y + forward.y * 8.0f,
+        pos.z + forward.z * 8.0f
+    };
+
+    float verts[] =
+    {
+        start.x, start.y, start.z,
+        end.x,   end.y,   end.z
+    };
+
+    unsigned int vao, vbo;
+
+    glGenVertexArrays(1, &vao);
+    glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+
+    glUseProgram(m_shader);
+
+    glUniformMatrix4fv(m_uViewLoc, 1, GL_FALSE, m_view.m);
+    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_proj.m);
+
+    Mat4 identity = Mat4::Identity();
+    glUniformMatrix4fv(m_uModelLoc, 1, GL_FALSE, identity.m);
+
+    glUniform3f(m_uColorLoc, 0.0f, 1.0f, 0.0f);
+
+    int useTexLoc = glGetUniformLocation(m_shader, "uUseTexture");
+    glUniform1i(useTexLoc, 0);
+
+    glLineWidth(3.0f);
+    glDrawArrays(GL_LINES, 0, 2);
+    glLineWidth(1.0f);
+
+    glDeleteBuffers(1, &vbo);
+    glDeleteVertexArrays(1, &vao);
+}
 
 
 static unsigned int LoadBMPTexture(const std::string& path)
@@ -452,14 +515,26 @@ void Renderer::CreateCube()
 {
     float vertices[] =
     {
-        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f,0.5f,-0.5f,
-        0.5f,0.5f,-0.5f,   -0.5f,0.5f,-0.5f,  -0.5f,-0.5f,-0.5f,
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f, 0.5f,-0.5f,
+         0.5f, 0.5f,-0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
 
-        -0.5f,-0.5f,0.5f,   0.5f,-0.5f,0.5f,   0.5f,0.5f,0.5f,
-        0.5f,0.5f,0.5f,    -0.5f,0.5f,0.5f,   -0.5f,-0.5f,0.5f
+        -0.5f,-0.5f, 0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f,-0.5f, 0.5f,
+
+        -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f, -0.5f,-0.5f,-0.5f,
+        -0.5f,-0.5f,-0.5f, -0.5f,-0.5f, 0.5f, -0.5f, 0.5f, 0.5f,
+
+         0.5f, 0.5f, 0.5f,  0.5f, 0.5f,-0.5f,  0.5f,-0.5f,-0.5f,
+         0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,  0.5f, 0.5f, 0.5f,
+
+        -0.5f,-0.5f,-0.5f,  0.5f,-0.5f,-0.5f,  0.5f,-0.5f, 0.5f,
+         0.5f,-0.5f, 0.5f, -0.5f,-0.5f, 0.5f, -0.5f,-0.5f,-0.5f,
+
+        -0.5f, 0.5f,-0.5f,  0.5f, 0.5f,-0.5f,  0.5f, 0.5f, 0.5f,
+         0.5f, 0.5f, 0.5f, -0.5f, 0.5f, 0.5f, -0.5f, 0.5f,-0.5f
     };
 
-    m_cubeVertexCount = 12;
+    m_cubeVertexCount = 36;
 
     glGenVertexArrays(1, &m_cubeVAO);
     glGenBuffers(1, &m_cubeVBO);
@@ -532,6 +607,9 @@ void Renderer::DrawCube(const Mat4& model)
     glUniformMatrix4fv(m_uModelLoc, 1, GL_FALSE, model.m);
 
     glUniform3f(m_uColorLoc, 0.8f, 0.2f, 0.2f);
+
+    int useTexLoc = glGetUniformLocation(m_shader, "uUseTexture");
+    glUniform1i(useTexLoc, 0);
 
     glBindVertexArray(m_cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, m_cubeVertexCount);

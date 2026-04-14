@@ -1,8 +1,10 @@
 #include "Renderer/GatherScene.h"
 #include "GVFramework/Scene/SceneObject.h"
 #include "GVFramework/Scene/SceneManager.h"
+
 #include <filesystem>
-#include <iostream>
+
+namespace fs = std::filesystem;
 
 void GatherScene::Collect(SceneFolder& root,
     const std::string& resourceRoot,
@@ -18,17 +20,34 @@ void GatherScene::CollectFolder(SceneFolder& folder,
     for (auto& objPtr : folder.objects)
     {
         SceneObject* obj = objPtr.get();
-        if (!obj || !obj->def)
+        if (!obj || !obj->def || !obj->def->def)
             continue;
+
+        const GV_Logic_Unit& lu = *obj->def->def;
 
         RenderItem item{};
         item.object = obj;
 
-        item.model = BuildModelFromLogicUnit(
-            obj->def.get(),
-            resourceRoot,
-            item.modelPath
-        );
+        if (lu.chunkType == GV_CHUNK_CAMERA)
+        {
+            item.type = RenderItemType::CameraGizmo;
+
+            ExtractCameraFromLogicUnit(
+                obj->def.get(),
+                item.camPos,
+                item.camRot
+            );
+        }
+        else
+        {
+            item.type = RenderItemType::Mesh;
+
+            item.model = BuildModelFromLogicUnit(
+                obj->def.get(),
+                resourceRoot,
+                item.modelPath
+            );
+        }
 
         outItems.push_back(item);
     }
@@ -69,12 +88,8 @@ Mat4 GatherScene::BuildModelFromLogicUnit(
 
         else if (name == "modelPath" && !value.sval.empty())
         {
-            std::filesystem::path full =
-                std::filesystem::path(resourceRoot) / value.sval;
-
+            fs::path full = fs::path(resourceRoot) / value.sval;
             outModelPath = full.string();
-
-            
         }
     }
 
@@ -84,4 +99,28 @@ Mat4 GatherScene::BuildModelFromLogicUnit(
         RotateX(rotation.x) *
         RotateZ(rotation.z) *
         Scale(scale);
+}
+
+void GatherScene::ExtractCameraFromLogicUnit(
+    GV_Logic_Unit_Instance* inst,
+    Vec3& outPos,
+    Vec3& outRot)
+{
+    if (!inst || !inst->def)
+        return;
+
+    for (size_t i = 0; i < inst->values.size(); ++i)
+    {
+        const auto& paramDef = inst->def->params[i];
+        const auto& value = inst->values[i];
+        const std::string& name = paramDef.name;
+
+        if (name == "positionX") outPos.x = value.fval;
+        else if (name == "positionY") outPos.y = value.fval;
+        else if (name == "positionZ") outPos.z = value.fval;
+
+        else if (name == "rotationPitch") outRot.x = value.fval;
+        else if (name == "rotationYaw")   outRot.y = value.fval;
+        else if (name == "rotationRoll")  outRot.z = value.fval;
+    }
 }

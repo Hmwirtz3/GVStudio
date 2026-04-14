@@ -3,7 +3,7 @@
 #include "MiniMath/MiniMath.h"
 #include <string>
 #include <unordered_map>
-
+#include <vector>
 
 struct SubMesh
 {
@@ -17,8 +17,6 @@ struct Mesh
 {
     std::vector<SubMesh> parts;
 };
-
-
 
 class Renderer
 {
@@ -34,6 +32,8 @@ public:
     void DrawGrid();
     void DrawCube(const Mat4& model);
     void DrawModel(const std::string& path, const Mat4& model);
+
+    void DrawCameraGizmo(const Vec3& pos, const Vec3& rot);
 
     unsigned int GetColorTexture() const;
 
