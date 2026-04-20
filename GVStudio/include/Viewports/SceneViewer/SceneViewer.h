@@ -19,6 +19,8 @@ public:
 
 	unsigned int GetColorTexture() const;
 
+	Renderer& GetRenderer();
+
 	
 private:
 	int m_width = 1;

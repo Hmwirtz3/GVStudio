@@ -136,6 +136,9 @@
     <Filter Include="Header Files\Viewports\Toolbars\MainToolbar">
       <UniqueIdentifier>{624f8acd-4ac8-47e9-8551-e995ffc229b2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\3rdParty\STB">
+      <UniqueIdentifier>{01f19cf1-e0d3-4b29-809d-05a39676ff87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -457,6 +460,9 @@
     </ClInclude>
     <ClInclude Include="include\Viewports\Toolbars\MainToolbar\ExporterTab.h">
       <Filter>Header Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClInclude>
+    <ClInclude Include="include\3rdParty\STB\stb_image.h">
+      <Filter>Header Files\3rdParty\STB</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

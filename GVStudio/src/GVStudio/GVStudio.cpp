@@ -242,6 +242,17 @@ int GV_STUDIO::RUN()
                     m_state.project.resourceFolder
                 );
 
+                SceneViewer& sceneViewer = m_viewportPanel.GetSceneViewer();
+                Renderer& renderer = sceneViewer.GetRenderer();
+
+                const auto& cache = renderer.GetMeshCache();
+
+                for (const auto& [path, mesh] : cache)
+                {
+                    GV_MeshData exportMesh = renderer.ConvertToExportMesh(mesh);
+                    m_exportContext.SetMeshData(path, exportMesh);
+                }
+
                 GV_ExportScene(m_sceneManager, outputPath.string(), m_exportContext);
             }
 

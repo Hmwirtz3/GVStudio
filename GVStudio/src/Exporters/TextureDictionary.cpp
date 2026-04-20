@@ -6,20 +6,12 @@
 #include <vector>
 #include <algorithm>
 
-// ============================================================
-// Convert RGBA → RGB565
-// ============================================================
+#define STB_IMAGE_IMPLEMENTATION
+#include "3rdParty/STB/stb_image.h"
 
-static uint16_t ConvertRGBAto565(uint8_t r, uint8_t g, uint8_t b)
-{
-    return ((b >> 3) << 11) |
-        ((g >> 2) << 5) |
-        ((r >> 3));
-}
-
-// ============================================================
+// ============================================
 // PATH HELPERS
-// ============================================================
+// ============================================
 
 static bool IsAbsolutePath(const std::string& path)
 {
@@ -28,39 +20,9 @@ static bool IsAbsolutePath(const std::string& path)
     return false;
 }
 
-// ============================================================
-// BMP STRUCTS
-// ============================================================
-
-#pragma pack(push, 1)
-struct BMPHeader
-{
-    uint16_t bfType;
-    uint32_t bfSize;
-    uint16_t bfReserved1;
-    uint16_t bfReserved2;
-    uint32_t bfOffBits;
-};
-
-struct BMPInfoHeader
-{
-    uint32_t biSize;
-    int32_t  biWidth;
-    int32_t  biHeight;
-    uint16_t biPlanes;
-    uint16_t biBitCount;
-    uint32_t biCompression;
-    uint32_t biSizeImage;
-    int32_t  biXPelsPerMeter;
-    int32_t  biYPelsPerMeter;
-    uint32_t biClrUsed;
-    uint32_t biClrImportant;
-};
-#pragma pack(pop)
-
-// ============================================================
-// BMP Loader (4bpp + 8bpp)
-// ============================================================
+// ============================================
+// LOAD IMAGE (ANY FORMAT)
+// ============================================
 
 static bool LoadImageRGBA(
     const std::string& path,
@@ -68,139 +30,70 @@ static bool LoadImageRGBA(
     int& height,
     std::vector<uint8_t>& pixels)
 {
-    std::ifstream file(path, std::ios::binary);
-    if (!file.is_open())
+    int channels = 0;
+
+    unsigned char* data = stbi_load(
+        path.c_str(),
+        &width,
+        &height,
+        &channels,
+        4 // force RGBA
+    );
+
+    if (!data)
     {
-        std::cerr << "[BMP] Failed to open: " << path << "\n";
+        std::cerr << "[Image] Failed to load: " << path << "\n";
+        std::cerr << "Reason: " << stbi_failure_reason() << "\n";
         return false;
     }
 
-    BMPHeader header{};
-    BMPInfoHeader info{};
+    pixels.assign(data, data + (width * height * 4));
+    stbi_image_free(data);
 
-    file.read((char*)&header, sizeof(header));
-    file.read((char*)&info, sizeof(info));
+    std::cout << "[Image] Loaded: " << path
+        << " (" << width << "x" << height << ")\n";
 
-    if (header.bfType != 0x4D42)
+    return true;
+}
+
+// ============================================
+// FORMAT HELPERS
+// ============================================
+
+enum TextureFormat
+{
+    TEX_RGB565 = 0,
+    TEX_RGBA4444 = 1
+};
+
+static bool HasAlpha(const std::vector<uint8_t>& rgba)
+{
+    for (size_t i = 0; i < rgba.size(); i += 4)
     {
-        std::cerr << "[BMP] Invalid file: " << path << "\n";
-        return false;
+        if (rgba[i + 3] < 255)
+            return true;
     }
-
-    if (info.biCompression != 0)
-    {
-        std::cerr << "[BMP] Compressed BMP not supported: " << path << "\n";
-        return false;
-    }
-
-    width = info.biWidth;
-    height = info.biHeight;
-
-    std::cout << "[BMP] w=" << width
-        << " h=" << height
-        << " bpp=" << info.biBitCount << "\n";
-
-    pixels.resize(width * height * 4);
-
-    // ========================================================
-    // 4-bit / 8-bit (PALETTE)
-    // ========================================================
-
-    if (info.biBitCount == 8 || info.biBitCount == 4)
-    {
-        struct PaletteEntry { uint8_t b, g, r, a; };
-
-        int paletteSize = (info.biBitCount == 8) ? 256 : 16;
-
-        std::vector<PaletteEntry> palette(paletteSize);
-        file.read((char*)palette.data(), paletteSize * sizeof(PaletteEntry));
-
-        int rowPadded = (info.biBitCount == 8)
-            ? (width + 3) & (~3)
-            : ((width + 1) / 2 + 3) & (~3);
-
-        std::vector<uint8_t> row(rowPadded);
-
-        file.seekg(header.bfOffBits, std::ios::beg);
-
-        for (int y = 0; y < height; y++)
-        {
-            file.read((char*)row.data(), rowPadded);
-
-            for (int x = 0; x < width; x++)
-            {
-                uint8_t index = 0;
-
-                if (info.biBitCount == 8)
-                {
-                    index = row[x];
-                }
-                else
-                {
-                    uint8_t byte = row[x / 2];
-                    index = (x % 2 == 0)
-                        ? (byte >> 4) & 0x0F
-                        : byte & 0x0F;
-                }
-
-                const auto& p = palette[index];
-
-                int dst = ((height - 1 - y) * width + x) * 4;
-
-                pixels[dst + 0] = p.r;
-                pixels[dst + 1] = p.g;
-                pixels[dst + 2] = p.b;
-                pixels[dst + 3] = 255;
-            }
-        }
-
-        return true;
-    }
-
-    // ========================================================
-    // 🔥 24-BIT SUPPORT (THIS IS THE FIX)
-    // ========================================================
-
-    if (info.biBitCount == 24)
-    {
-        int rowPadded = (width * 3 + 3) & (~3);
-        std::vector<uint8_t> row(rowPadded);
-
-        file.seekg(header.bfOffBits, std::ios::beg);
-
-        for (int y = 0; y < height; y++)
-        {
-            file.read((char*)row.data(), rowPadded);
-
-            for (int x = 0; x < width; x++)
-            {
-                uint8_t b = row[x * 3 + 0];
-                uint8_t g = row[x * 3 + 1];
-                uint8_t r = row[x * 3 + 2];
-
-                int dst = ((height - 1 - y) * width + x) * 4;
-
-                pixels[dst + 0] = r;
-                pixels[dst + 1] = g;
-                pixels[dst + 2] = b;
-                pixels[dst + 3] = 255;
-            }
-        }
-
-        return true;
-    }
-
-    // ========================================================
-    // UNSUPPORTED
-    // ========================================================
-
-    std::cerr << "[BMP] Unsupported BPP: " << info.biBitCount << "\n";
     return false;
 }
 
-// ============================================================
-// Exporter Implementation
-// ============================================================
+static uint16_t To565(uint8_t r, uint8_t g, uint8_t b)
+{
+    return ((b >> 3) << 11) |
+        ((g >> 2) << 5) |
+        ((r >> 3));
+}
+
+static uint16_t To4444(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    return ((a >> 4) << 12) |
+        ((b >> 4) << 8) |
+        ((g >> 4) << 4) |
+        ((r >> 4));
+}
+
+// ============================================
+// EXPORTER IMPLEMENTATION
+// ============================================
 
 void GV_Exporter<TextureDictionary>::Build(
     const TextureDictionary&,
@@ -229,16 +122,47 @@ void GV_Exporter<TextureDictionary>::Build(
             continue;
         }
 
-        // Convert → RGB565
-        std::vector<uint16_t> pixels565(width * height);
+        bool hasAlpha = HasAlpha(rgba);
 
-        for (int p = 0; p < width * height; p++)
+        uint32_t format = TEX_RGB565;
+        std::vector<char> finalPixels;
+
+        if (hasAlpha)
         {
-            uint8_t r = rgba[p * 4 + 0];
-            uint8_t g = rgba[p * 4 + 1];
-            uint8_t b = rgba[p * 4 + 2];
+            format = TEX_RGBA4444;
 
-            pixels565[p] = ConvertRGBAto565(r, g, b);
+            std::vector<uint16_t> pixels(width * height);
+
+            for (int p = 0; p < width * height; p++)
+            {
+                uint8_t r = rgba[p * 4 + 0];
+                uint8_t g = rgba[p * 4 + 1];
+                uint8_t b = rgba[p * 4 + 2];
+                uint8_t a = rgba[p * 4 + 3];
+
+                pixels[p] = To4444(r, g, b, a);
+            }
+
+            finalPixels.resize(pixels.size() * sizeof(uint16_t));
+            memcpy(finalPixels.data(), pixels.data(), finalPixels.size());
+        }
+        else
+        {
+            format = TEX_RGB565;
+
+            std::vector<uint16_t> pixels(width * height);
+
+            for (int p = 0; p < width * height; p++)
+            {
+                uint8_t r = rgba[p * 4 + 0];
+                uint8_t g = rgba[p * 4 + 1];
+                uint8_t b = rgba[p * 4 + 2];
+
+                pixels[p] = To565(r, g, b);
+            }
+
+            finalPixels.resize(pixels.size() * sizeof(uint16_t));
+            memcpy(finalPixels.data(), pixels.data(), finalPixels.size());
         }
 
         // ----------------------------------------
@@ -247,16 +171,19 @@ void GV_Exporter<TextureDictionary>::Build(
 
         GV_ChunkExporter texPayload;
 
-        uint32_t textureID = i + 1 ;
-        uint32_t format = 0; // RGB565
-        uint32_t dataSize = (uint32_t)(pixels565.size() * sizeof(uint16_t));
+        uint32_t textureID = i + 1;
+        uint32_t dataSize = (uint32_t)finalPixels.size();
 
         texPayload.Write(textureID);
         texPayload.Write((uint32_t)width);
         texPayload.Write((uint32_t)height);
         texPayload.Write(format);
         texPayload.Write(dataSize);
-        texPayload.WriteData(pixels565.data(), dataSize);
+
+        // ✅ ONLY CHANGE: ALIGN BEFORE PIXEL DATA
+        texPayload.Align16();
+
+        texPayload.WriteData(finalPixels.data(), dataSize);
 
         // ----------------------------------------
         // APPEND AS CHILD CHUNK
@@ -270,9 +197,9 @@ void GV_Exporter<TextureDictionary>::Build(
     }
 }
 
-// ============================================================
-// Chunk Type
-// ============================================================
+// ============================================
+// CHUNK TYPE
+// ============================================
 
 uint32_t GV_Exporter<TextureDictionary>::GetChunkType()
 {

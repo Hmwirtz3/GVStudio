@@ -42,7 +42,8 @@ enum GV_ChunkType : uint32_t
     GV_CHUNK_STATIC_MESH = 0x0013,
 
     
-    GV_CHUNK_LIGHT = 0x0011,
+    GV_CHUNK_DYNAMIC_LIGHT = 0x0011,
+    GV_CHUNK_BAKED_LIGHT  = 0x0026,
     GV_CHUNK_UNICODE_STRING = 0x0012,
     GV_CHUNK_ATOMIC = 0x0014,
     GV_CHUNK_TEXTURE_NATIVE = 0x0025,
@@ -81,5 +82,4 @@ enum GV_ChunkType : uint32_t
 
 
 
-void WriteChunk(std::ofstream& out, uint32_t type, uint32_t version, const std::vector<char>& data);
-void AppendChunk(std::vector<char>& dest, uint32_t type, uint32_t version, const std::vector<char>& payload);
+

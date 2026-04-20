@@ -180,6 +180,7 @@
   <ItemGroup>
     <ClInclude Include="include\3rdParty\glad\glad.h" />
     <ClInclude Include="include\3rdParty\KHR\KHR\khrplatform.h" />
+    <ClInclude Include="include\3rdParty\STB\stb_image.h" />
     <ClInclude Include="include\Database\AssetDatabase.h" />
     <ClInclude Include="include\Database\LogicUnitRegistry.h" />
     <ClInclude Include="include\Database\ResourceDatabase.h" />

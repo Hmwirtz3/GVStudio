@@ -1,11 +1,15 @@
-#include "Renderer/Renderer.h"
+﻿#include "Renderer/Renderer.h"
 #include "3rdParty/glad/glad.h"
+#include "3rdParty/STB/stb_image.h"
 
 #include <vector>
 #include <fstream>
 #include <sstream>
 #include <iostream>
 #include <filesystem>
+#include <algorithm>
+#include <cmath>
+#include <cstring>
 
 namespace fs = std::filesystem;
 
@@ -21,6 +25,167 @@ struct Vec2
     Vec2() : x(0), y(0) {}
     Vec2(float _x, float _y) : x(_x), y(_y) {}
 };
+
+/*===========================================================
+HELPERS
+===========================================================*/
+
+static float Clamp01(float v)
+{
+    if (v < 0.0f) return 0.0f;
+    if (v > 1.0f) return 1.0f;
+    return v;
+}
+
+static float Length3(float x, float y, float z)
+{
+    return std::sqrt(x * x + y * y + z * z);
+}
+
+/*===========================================================
+BAKED LIGHT SETTER
+===========================================================*/
+
+void Renderer::SetBakedLights(const std::vector<BakedLight>& lights)
+{
+    m_bakedLights = lights;
+
+    
+    
+}
+
+static unsigned int LoadTextureSTB(const std::string& path)
+{
+    stbi_set_flip_vertically_on_load(true);
+
+    int w, h, channels;
+    unsigned char* data = stbi_load(path.c_str(), &w, &h, &channels, 0);
+    if (!data)
+        return 0;
+
+    GLenum format = (channels == 4) ? GL_RGBA : GL_RGB;
+
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        format,
+        w,
+        h,
+        0,
+        format,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    stbi_image_free(data);
+
+    std::cout << "[STB] " << path << " (" << w << "x" << h << ")\n";
+
+    return tex;
+}
+
+void Renderer::BakeMesh(Mesh& mesh, const Mat4& model)
+{
+    for (SubMesh& part : mesh.parts)
+    {
+        if (part.vertices.empty())
+            continue;
+
+        for (int i = 0; i < part.vertexCount; i++)
+        {
+            const int base = i * 8;
+
+            Vec3 local =
+            {
+                part.vertices[base + 0],
+                part.vertices[base + 1],
+                part.vertices[base + 2]
+            };
+
+            Vec3 p =
+            {
+                model.m[0] * local.x + model.m[4] * local.y + model.m[8] * local.z + model.m[12],
+                model.m[1] * local.x + model.m[5] * local.y + model.m[9] * local.z + model.m[13],
+                model.m[2] * local.x + model.m[6] * local.y + model.m[10] * local.z + model.m[14]
+            };
+
+            // Start with ambient so unlit verts are not black
+            Vec3 bakedColor = { 0.03f, 0.03f, 0.03f };
+
+            for (const BakedLight& light : m_bakedLights)
+            {
+                if (light.type == 0) // Point
+                {
+                    float dx = p.x - light.position.x;
+                    float dy = p.y - light.position.y;
+                    float dz = p.z - light.position.z;
+
+                    float dist = Length3(dx, dy, dz);
+
+                    if (light.range > 0.0f)
+                    {
+                        float t = dist / (light.range * 1.8f);
+                        if (t > 1.0f) t = 1.0f;
+
+                        float atten = std::pow(1.0f - t, light.falloff);
+
+                        bakedColor.x += light.color.x * light.intensity * atten;
+                        bakedColor.y += light.color.y * light.intensity * atten;
+                        bakedColor.z += light.color.z * light.intensity * atten;
+                    }
+                }
+                else // Directional
+                {
+                    bakedColor.x += light.color.x * light.intensity;
+                    bakedColor.y += light.color.y * light.intensity;
+                    bakedColor.z += light.color.z * light.intensity;
+                }
+            }
+
+            bakedColor.x = Clamp01(bakedColor.x);
+            bakedColor.y = Clamp01(bakedColor.y);
+            bakedColor.z = Clamp01(bakedColor.z);
+
+            part.vertices[base + 5] = bakedColor.x;
+            part.vertices[base + 6] = bakedColor.y;
+            part.vertices[base + 7] = bakedColor.z;
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, part.vbo);
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            0,
+            part.vertices.size() * sizeof(float),
+            part.vertices.data()
+        );
+    }
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+}
+
+/*===========================================================
+REBake Cached Mesh
+===========================================================*/
+
+
+
+/*===========================================================
+DRAW CAMERA GIZMO
+===========================================================*/
 
 void Renderer::DrawCameraGizmo(const Vec3& pos, const Vec3& rot)
 {
@@ -65,6 +230,9 @@ void Renderer::DrawCameraGizmo(const Vec3& pos, const Vec3& rot)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 
+    glDisableVertexAttribArray(2);
+    glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
+
     glUseProgram(m_shader);
 
     glUniformMatrix4fv(m_uViewLoc, 1, GL_FALSE, m_view.m);
@@ -86,6 +254,9 @@ void Renderer::DrawCameraGizmo(const Vec3& pos, const Vec3& rot)
     glDeleteVertexArrays(1, &vao);
 }
 
+/*===========================================================
+BMP LOADER
+===========================================================*/
 
 static unsigned int LoadBMPTexture(const std::string& path)
 {
@@ -107,9 +278,6 @@ static unsigned int LoadBMPTexture(const std::string& path)
         return 0;
     }
 
-    // ========================================================
-    // CRITICAL: Validate BMP signature
-    // ========================================================
     if (header[0] != 'B' || header[1] != 'M')
     {
         std::cout << "[BMP] Not a BMP file: " << path << "\n";
@@ -122,9 +290,6 @@ static unsigned int LoadBMPTexture(const std::string& path)
     int height = *(int*)&header[22];
     int bpp = *(short*)&header[28];
 
-    // ========================================================
-    // CRITICAL: Sanity checks
-    // ========================================================
     if (width <= 0 || height <= 0)
     {
         std::cout << "[BMP] Invalid dimensions: " << path << "\n";
@@ -143,9 +308,6 @@ static unsigned int LoadBMPTexture(const std::string& path)
 
     std::vector<unsigned char> rgbData;
 
-    // ========================================================
-    // INDEXED (4/8 bit)
-    // ========================================================
     if (bpp == 8 || bpp == 4)
     {
         int paletteEntries = (bpp == 8) ? 256 : 16;
@@ -190,7 +352,7 @@ static unsigned int LoadBMPTexture(const std::string& path)
                 {
                     idx = indexData[y * rowSize + x];
                 }
-                else // 4-bit
+                else
                 {
                     unsigned char byte = indexData[y * rowSize + (x / 2)];
                     idx = (x % 2 == 0) ? (byte >> 4) : (byte & 0x0F);
@@ -213,9 +375,6 @@ static unsigned int LoadBMPTexture(const std::string& path)
     }
     else
     {
-        // ====================================================
-        // 24 / 32 bit
-        // ====================================================
         int bytesPerPixel = bpp / 8;
         int rowSize = ((width * bytesPerPixel + 3) / 4) * 4;
 
@@ -250,7 +409,7 @@ static unsigned int LoadBMPTexture(const std::string& path)
     }
 
     fclose(f);
-    
+
     if (rgbData.empty())
     {
         std::cout << "[BMP] No image data: " << path << "\n";
@@ -278,8 +437,8 @@ static unsigned int LoadBMPTexture(const std::string& path)
         GL_UNSIGNED_BYTE,
         rgbData.data());
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -289,9 +448,7 @@ static unsigned int LoadBMPTexture(const std::string& path)
     return tex;
 }
 
-/*===========================================================
-SHADER HELPERS
-===========================================================*/
+
 
 static unsigned int CompileShader(unsigned int type, const char* src)
 {
@@ -321,10 +478,10 @@ static unsigned int CreateProgram(const char* vs, const char* fs)
 MTL PARSER
 ===========================================================*/
 
-static std::unordered_map<std::string, unsigned int>
+static std::unordered_map<std::string, std::string>
 ParseMTLTextures(const std::string& path)
 {
-    std::unordered_map<std::string, unsigned int> materials;
+    std::unordered_map<std::string, std::string> materials;
 
     std::ifstream file(path);
     std::string line;
@@ -345,24 +502,23 @@ ParseMTLTextures(const std::string& path)
         {
             std::string tex;
 
-            // Read full remainder of line (handles spaces)
             std::getline(ss, tex);
 
-            // FULL trim (leading + trailing whitespace)
             tex.erase(0, tex.find_first_not_of(" \t\r\n"));
             tex.erase(tex.find_last_not_of(" \t\r\n") + 1);
 
             fs::path texPath(tex);
 
-            // Only prepend MTL directory if path is relative
             if (!texPath.is_absolute())
             {
                 texPath = fs::path(path).parent_path() / texPath;
             }
 
-            unsigned int texID = LoadBMPTexture(texPath.string());
+            // normalize slashes (important)
+            std::string fullPath = texPath.string();
+            std::replace(fullPath.begin(), fullPath.end(), '\\', '/');
 
-            materials[currentMaterial] = texID;
+            materials[currentMaterial] = fullPath;
         }
     }
 
@@ -436,21 +592,25 @@ void Renderer::CreateBasicShader()
     const char* vs = R"(#version 330 core
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec2 aUV;
+layout(location = 2) in vec3 aColor;
 
 uniform mat4 uView;
 uniform mat4 uProj;
 uniform mat4 uModel;
 
 out vec2 vUV;
+out vec3 vColor;
 
 void main()
 {
     vUV = aUV;
+    vColor = aColor;
     gl_Position = uProj * uView * uModel * vec4(aPos,1.0);
 })";
 
     const char* fs = R"(#version 330 core
 in vec2 vUV;
+in vec3 vColor;
 
 out vec4 FragColor;
 
@@ -460,10 +620,14 @@ uniform int uUseTexture;
 
 void main()
 {
+    vec3 baseColor;
+
     if(uUseTexture == 1)
-        FragColor = texture(uTex, vUV);
+        baseColor = texture(uTex, vUV).rgb;
     else
-        FragColor = vec4(uColor,1.0);
+        baseColor = uColor;
+
+    FragColor = vec4(baseColor * vColor, 1.0);
 })";
 
     m_shader = CreateProgram(vs, fs);
@@ -475,7 +639,7 @@ void main()
 }
 
 /*===========================================================
-GRID (UNCHANGED)
+GRID
 ===========================================================*/
 
 void Renderer::CreateGrid()
@@ -508,7 +672,7 @@ void Renderer::CreateGrid()
 }
 
 /*===========================================================
-CUBE (UNCHANGED)
+CUBE
 ===========================================================*/
 
 void Renderer::CreateCube()
@@ -559,6 +723,8 @@ void Renderer::Begin(const Mat4& view, const Mat4& proj)
     m_view = view;
     m_proj = proj;
 
+    m_instanceDrawIndex.clear();
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
     glViewport(0, 0, m_width, m_height);
 
@@ -589,6 +755,12 @@ void Renderer::DrawGrid()
 
     glUniform3f(m_uColorLoc, 0.3f, 0.3f, 0.3f);
 
+    int useTexLoc = glGetUniformLocation(m_shader, "uUseTexture");
+    glUniform1i(useTexLoc, 0);
+
+    glDisableVertexAttribArray(2);
+    glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
+
     glBindVertexArray(m_gridVAO);
     glDrawArrays(GL_LINES, 0, m_gridVertexCount);
     glBindVertexArray(0);
@@ -611,13 +783,16 @@ void Renderer::DrawCube(const Mat4& model)
     int useTexLoc = glGetUniformLocation(m_shader, "uUseTexture");
     glUniform1i(useTexLoc, 0);
 
+    glDisableVertexAttribArray(2);
+    glVertexAttrib3f(2, 1.0f, 1.0f, 1.0f);
+
     glBindVertexArray(m_cubeVAO);
     glDrawArrays(GL_TRIANGLES, 0, m_cubeVertexCount);
     glBindVertexArray(0);
 }
 
 /*===========================================================
-OBJ LOADER WITH UV + TEXTURE
+OBJ LOADER WITH UV + TEXTURE + CPU VERTEX COPY
 ===========================================================*/
 
 Mesh Renderer::LoadOBJ(const std::string& path)
@@ -641,7 +816,7 @@ Mesh Renderer::LoadOBJ(const std::string& path)
     positions.reserve(200000);
     uvs.reserve(200000);
 
-    std::unordered_map<std::string, unsigned int> materials;
+    std::unordered_map<std::string, std::string> materials;
 
     std::string mtlFile;
     std::string currentMaterial;
@@ -691,7 +866,7 @@ Mesh Renderer::LoadOBJ(const std::string& path)
             currentBuilder = &builders[currentMaterial];
 
             if (currentBuilder->vertices.empty())
-                currentBuilder->vertices.reserve(500000);
+                currentBuilder->vertices.reserve(800000);
         }
 
         else if (ptr[0] == 'f' && ptr[1] == ' ')
@@ -732,6 +907,11 @@ Mesh Renderer::LoadOBJ(const std::string& path)
                     currentBuilder->vertices.push_back(p.z);
                     currentBuilder->vertices.push_back(uv.x);
                     currentBuilder->vertices.push_back(uv.y);
+
+                    // baked vertex color defaults to white until BakeMesh() runs
+                    currentBuilder->vertices.push_back(1.0f);
+                    currentBuilder->vertices.push_back(1.0f);
+                    currentBuilder->vertices.push_back(1.0f);
                 }
             }
         }
@@ -757,10 +937,19 @@ Mesh Renderer::LoadOBJ(const std::string& path)
 
         SubMesh part;
 
-        part.vertexCount = data.vertices.size() / 5;
+        part.vertexCount = (int)(data.vertices.size() / 8);
+        part.vertices = data.vertices;
 
         auto it = materials.find(matName);
-        part.texture = (it != materials.end()) ? it->second : 0;
+        if (it != materials.end())
+        {
+            part.texturePath = it->second;               // store path
+            part.texture = LoadTextureSTB(it->second);   // load for rendering
+        }
+        else
+        {
+            part.texture = 0;
+        }
 
         glGenVertexArrays(1, &part.vao);
         glGenBuffers(1, &part.vbo);
@@ -770,21 +959,27 @@ Mesh Renderer::LoadOBJ(const std::string& path)
 
         glBufferData(
             GL_ARRAY_BUFFER,
-            data.vertices.size() * sizeof(float),
-            data.vertices.data(),
+            part.vertices.size() * sizeof(float),
+            part.vertices.data(),
             GL_STATIC_DRAW
         );
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(
             0, 3, GL_FLOAT, GL_FALSE,
-            5 * sizeof(float), (void*)0
+            8 * sizeof(float), (void*)0
         );
 
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(
             1, 2, GL_FLOAT, GL_FALSE,
-            5 * sizeof(float), (void*)(3 * sizeof(float))
+            8 * sizeof(float), (void*)(3 * sizeof(float))
+        );
+
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(
+            2, 3, GL_FLOAT, GL_FALSE,
+            8 * sizeof(float), (void*)(5 * sizeof(float))
         );
 
         glBindVertexArray(0);
@@ -794,20 +989,159 @@ Mesh Renderer::LoadOBJ(const std::string& path)
 
     std::cout << "[OBJ] Loaded mesh parts: " << mesh.parts.size() << "\n";
 
+   
+
     return mesh;
+}
+
+GV_MeshData Renderer::ConvertToExportMesh(const Mesh& mesh)
+{
+    GV_MeshData out;
+
+    for (const SubMesh& part : mesh.parts)
+    {
+        GV_Submesh sm;
+
+        for (int i = 0; i < part.vertexCount; i++)
+        {
+            int base = i * 8;
+
+            GV_Vertex v;
+            v.x = part.vertices[base + 0];
+            v.y = part.vertices[base + 1];
+            v.z = part.vertices[base + 2];
+            v.u = part.vertices[base + 3];
+            v.v = part.vertices[base + 4];
+
+            
+            v.r = part.vertices[base + 5];
+            v.g = part.vertices[base + 6];
+            v.b = part.vertices[base + 7];
+
+            sm.vertices.push_back(v);
+            sm.indices.push_back((uint16_t)sm.vertices.size() - 1);
+        }
+
+        sm.texturePath = part.texturePath;
+
+
+        out.submeshes.push_back(sm);
+    }
+
+    return out;
+}
+
+const std::unordered_map<std::string, Mesh>& Renderer::GetMeshCache() const
+{
+    return m_meshCache;
 }
 
 /*===========================================================
 DRAW MODEL
 ===========================================================*/
 
+void Renderer::BakeScene()
+{
+    // For every mesh path
+    for (auto& pair : m_meshInstances)
+    {
+        const std::string& path = pair.first;
+        const std::vector<Mat4>& models = pair.second;
+
+        // 🔥 ALWAYS use original source mesh
+        auto srcIt = m_sourceMeshes.find(path);
+        if (srcIt == m_sourceMeshes.end())
+            continue;
+
+        const Mesh& source = srcIt->second;
+
+        // Bake each instance independently
+        for (size_t i = 0; i < models.size(); i++)
+        {
+            Mesh copy;
+
+            for (const SubMesh& srcPart : source.parts)
+            {
+                SubMesh part;
+
+                part.vertexCount = srcPart.vertexCount;
+                part.vertices = srcPart.vertices;     // clean copy
+                part.texture = srcPart.texture;
+                part.texturePath = srcPart.texturePath;
+
+                glGenVertexArrays(1, &part.vao);
+                glGenBuffers(1, &part.vbo);
+
+                glBindVertexArray(part.vao);
+                glBindBuffer(GL_ARRAY_BUFFER, part.vbo);
+
+                glBufferData(
+                    GL_ARRAY_BUFFER,
+                    part.vertices.size() * sizeof(float),
+                    part.vertices.data(),
+                    GL_DYNAMIC_DRAW
+                );
+
+                glEnableVertexAttribArray(0);
+                glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(3 * sizeof(float)));
+
+                glEnableVertexAttribArray(2);
+                glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(5 * sizeof(float)));
+
+                glBindVertexArray(0);
+
+                copy.parts.push_back(part);
+            }
+
+            // 🔥 Bake THIS instance only
+            BakeMesh(copy, models[i]);
+
+            std::string key =
+                (i == 0) ? path : path + "_inst_" + std::to_string(i);
+
+            m_meshCache[key] = copy;
+        }
+    }
+
+    m_meshInstances.clear();
+    m_instanceDrawIndex.clear();
+}
+
 void Renderer::DrawModel(const std::string& path, const Mat4& model)
 {
-    if (m_meshCache.find(path) == m_meshCache.end())
-        m_meshCache[path] = LoadOBJ(path);
+    // Load SOURCE mesh only once (never baked)
+    if (m_sourceMeshes.find(path) == m_sourceMeshes.end())
+    {
+        m_sourceMeshes[path] = LoadOBJ(path);
+    }
 
-    Mesh& mesh = m_meshCache[path];
-    if (mesh.parts.empty()) return;
+    int& index = m_instanceDrawIndex[path];
+
+    m_meshInstances[path].push_back(model);
+
+    std::string key;
+
+    if (index == 0)
+        key = path;
+    else
+        key = path + "_inst_" + std::to_string(index);
+
+    auto it = m_meshCache.find(key);
+    if (it == m_meshCache.end())
+    {
+        index++;
+        return;
+    }
+
+    Mesh& mesh = it->second;
+    if (mesh.parts.empty())
+    {
+        index++;
+        return;
+    }
 
     glUseProgram(m_shader);
 
@@ -839,6 +1173,8 @@ void Renderer::DrawModel(const std::string& path, const Mat4& model)
     }
 
     glBindVertexArray(0);
+
+    index++;
 }
 
 unsigned int Renderer::GetColorTexture() const

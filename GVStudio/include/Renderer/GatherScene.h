@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "GVFramework/LogicUnit/LogicUnit.h"
 #include <vector>
@@ -7,6 +7,7 @@
 
 struct SceneFolder;
 class SceneObject;
+struct BakedLight;
 
 enum class RenderItemType
 {
@@ -35,6 +36,7 @@ public:
     static void Collect(SceneFolder& root,
         const std::string& resourceRoot,
         std::vector<RenderItem>& outItems);
+    static const std::vector<BakedLight>& GetBakedLights();
 
 private:
     static void CollectFolder(SceneFolder& folder,
@@ -44,6 +46,8 @@ private:
     static Mat4 BuildModelFromLogicUnit(GV_Logic_Unit_Instance* inst,
         const std::string& resourceRoot,
         std::string& outModelPath);
+
+    
 
     static void ExtractCameraFromLogicUnit(
         GV_Logic_Unit_Instance* inst,

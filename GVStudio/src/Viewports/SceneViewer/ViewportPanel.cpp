@@ -52,3 +52,8 @@ void ViewportPanel::Draw(SceneFolder& scene,
 
     ImGui::End();
 }
+
+SceneViewer& ViewportPanel::GetSceneViewer()
+{
+    return m_viewer;
+}

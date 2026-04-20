@@ -70,6 +70,8 @@ void SceneViewer::Render(SceneFolder& scene,
     std::vector<RenderItem> items;
     GatherScene::Collect(scene, resourceRoot, items);
 
+    m_renderer.SetBakedLights(GatherScene::GetBakedLights());
+
     m_renderer.Begin(
         m_camera.GetView(),
         m_camera.GetProjection());
@@ -94,6 +96,8 @@ void SceneViewer::Render(SceneFolder& scene,
                 item.camRot);
         }
     }
+
+    m_renderer.BakeScene();
 
     m_renderer.End();
 }
@@ -223,4 +227,9 @@ SceneObject* SceneViewer::PickObject(
 unsigned int SceneViewer::GetColorTexture() const
 {
     return m_renderer.GetColorTexture();
+}
+
+Renderer& SceneViewer::GetRenderer()
+{
+    return m_renderer;
 }

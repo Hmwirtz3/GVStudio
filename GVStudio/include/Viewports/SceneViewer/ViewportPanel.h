@@ -6,7 +6,8 @@ class ViewportPanel
 public:
 
 	void Draw(SceneFolder& scene, const std::string& resourceRoot, SceneObject*& selectedObject);
-
+	SceneViewer& GetSceneViewer();
+	
 
 
 private:

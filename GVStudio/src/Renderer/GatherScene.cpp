@@ -1,17 +1,43 @@
-#include "Renderer/GatherScene.h"
+﻿#include "Renderer/GatherScene.h"
 #include "GVFramework/Scene/SceneObject.h"
 #include "GVFramework/Scene/SceneManager.h"
+#include "Renderer/Renderer.h"
 
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
+/*===========================================================
+NEW: STATIC STORAGE FOR LIGHTS
+===========================================================*/
+
+static std::vector<BakedLight> g_bakedLights;
+
+/*===========================================================
+NEW: ACCESSOR
+===========================================================*/
+
+const std::vector<BakedLight>& GatherScene::GetBakedLights()
+{
+    return g_bakedLights;
+}
+
+/*===========================================================
+ORIGINAL COLLECT (UNCHANGED)
+===========================================================*/
+
 void GatherScene::Collect(SceneFolder& root,
     const std::string& resourceRoot,
     std::vector<RenderItem>& outItems)
 {
+    g_bakedLights.clear(); // 🔥 reset each gather
+
     CollectFolder(root, resourceRoot, outItems);
 }
+
+/*===========================================================
+COLLECT FOLDER (ONLY ADDITION IS LIGHT BLOCK)
+===========================================================*/
 
 void GatherScene::CollectFolder(SceneFolder& folder,
     const std::string& resourceRoot,
@@ -24,6 +50,45 @@ void GatherScene::CollectFolder(SceneFolder& folder,
             continue;
 
         const GV_Logic_Unit& lu = *obj->def->def;
+
+        /*===================================================
+        NEW: BAKED LIGHT COLLECTION
+        ===================================================*/
+        if (lu.chunkType == GV_CHUNK_BAKED_LIGHT)
+        {
+            BakedLight light{};
+
+            for (size_t i = 0; i < obj->def->values.size(); ++i)
+            {
+                const auto& paramDef = obj->def->def->params[i];
+                const auto& value = obj->def->values[i];
+                const std::string& name = paramDef.name;
+
+                if (name == "posX") light.position.x = value.fval;
+                else if (name == "posY") light.position.y = value.fval;
+                else if (name == "posZ") light.position.z = value.fval;
+
+                else if (name == "dirX") light.direction.x = value.fval;
+                else if (name == "dirY") light.direction.y = value.fval;
+                else if (name == "dirZ") light.direction.z = value.fval;
+
+                else if (name == "colorR") light.color.x = value.fval;
+                else if (name == "colorG") light.color.y = value.fval;
+                else if (name == "colorB") light.color.z = value.fval;
+
+                else if (name == "intensity") light.intensity = value.fval;
+                else if (name == "range") light.range = value.fval;
+                else if (name == "falloff") light.falloff = value.fval;
+
+                else if (name == "lightType") light.type = (int)value.fval;
+            }
+
+            g_bakedLights.push_back(light);
+        }
+
+        /*===================================================
+        ORIGINAL LOGIC (UNCHANGED)
+        ===================================================*/
 
         RenderItem item{};
         item.object = obj;
@@ -55,6 +120,10 @@ void GatherScene::CollectFolder(SceneFolder& folder,
     for (auto& child : folder.children)
         CollectFolder(*child, resourceRoot, outItems);
 }
+
+/*===========================================================
+UNCHANGED BELOW
+===========================================================*/
 
 Mat4 GatherScene::BuildModelFromLogicUnit(
     GV_Logic_Unit_Instance* inst,

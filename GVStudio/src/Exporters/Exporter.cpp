@@ -169,10 +169,10 @@ static void BuildContextFolder(
                 std::string ext = asset.substr(extPos + 1);
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
-                if (ext == "bmp")
-                {
-                    ctx.RegisterTexture(asset);
-                }
+                if (ext == "bmp" || ext == "png" || ext == "jpg" || ext == "jpeg" || ext == "tga")
+{
+    ctx.RegisterTexture(asset);
+}
                 else if (ext == "obj")
                 {
                     ctx.RegisterMesh(asset);
@@ -237,10 +237,7 @@ static void ExportObject(
     std::cout << "  LogicUnit: " << lu.typeName << "\n";
     std::cout << "  ChunkType: " << lu.chunkType << "\n";
 
-    // 🔥 SceneObject payload (container)
     GV_ChunkExporter objPayload;
-
-    // 🔥 Inner LogicUnit chunk payload
     GV_ChunkExporter innerPayload;
 
     struct ParamPair
@@ -308,7 +305,6 @@ static void ExportObject(
 
     innerPayload.Align16();
 
-    // 🔥 Payload handling (unchanged logic)
     switch (lu.chunkType)
     {
     case GV_CHUNK_STATIC_MESH:
@@ -343,6 +339,35 @@ static void ExportObject(
         break;
     }
 
+    case GV_CHUNK_TEXTURE:
+    {
+        std::cout << "  → UI Texture\n";
+
+        std::string textureName;
+
+        for (size_t i = 0; i < total; i++)
+        {
+            const LU_Param_Def& def = lu.params[i];
+            const LU_Param_Val& val = obj.def->values[i];
+
+            if (def.name == "texture")
+                textureName = val.sval;
+        }
+
+        if (textureName.empty())
+        {
+            std::cout << "  [SKIP] No texture assigned\n";
+            return;
+        }
+
+        uint32_t textureID = ctx.GetTextureID(textureName);
+
+        std::cout << "  TextureID: " << textureID << "\n";
+
+        innerPayload.WriteData(&textureID, sizeof(uint32_t));
+        break;
+    }
+
     default:
     {
         std::cout << "  → No exporter (param-only chunk)\n";
@@ -350,14 +375,12 @@ static void ExportObject(
     }
     }
 
-    // 🔥 Wrap LogicUnit in FULL chunk header
     objPayload.AppendChunk(
         lu.chunkType,
         1,
         innerPayload.buffer
     );
 
-    // 🔥 Wrap SceneObject (unchanged)
     exporter.AppendChunk(
         GV_CHUNK_SCENE_OBJECT,
         1,

@@ -2,6 +2,7 @@
 #include "GVFramework/Chunk/Chunk.h"
 
 #include <iostream>
+#include <algorithm>
 
 
 
@@ -14,7 +15,18 @@ static PSPVertex ConvertToPSPVertex(const GV_Vertex& v)
     out.u = (int16_t)(v.u * 32767.0f);
     out.v = (int16_t)(v.v * 32767.0f);
 
-    out.color = 0xFFFFFFFF;
+    float r = std::clamp(v.r, 0.0f, 1.0f);
+    float g = std::clamp(v.g, 0.0f, 1.0f);
+    float b = std::clamp(v.b, 0.0f, 1.0f);
+
+    uint8_t R = (uint8_t)(r * 255.0f);
+    uint8_t G = (uint8_t)(g * 255.0f);
+    uint8_t B = (uint8_t)(b * 255.0f);
+    uint8_t A = 255;
+
+    out.color = (A << 24) | (B << 16) | (G << 8) | R;
+
+    
 
     out.x = v.x;
     out.y = v.y;
@@ -130,7 +142,16 @@ void GV_Exporter<StaticMesh>::Build(
         {
             GV_ChunkExporter sub;
 
-            sub.Write(sm.textureID);
+            uint32_t textureID = 0;
+
+            if (!sm.texturePath.empty())
+            {
+                textureID = ctx.GetTextureID(sm.texturePath);
+            }
+
+            std::cout << "    Final TextureID: " << textureID << "\n";
+
+            sub.Write(textureID);
 
             exporter.AppendChunk(GV_CHUNK_MATERIAL, 1, sub.buffer);
         }
