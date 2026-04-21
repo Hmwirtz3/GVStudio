@@ -47,10 +47,23 @@ static bool LoadImageRGBA(
         return false;
     }
 
-    pixels.assign(data, data + (width * height * 4));
+    // allocate output
+    pixels.resize(width * height * 4);
+
+    const int rowSize = width * 4;
+
+    // flip vertically
+    for (int y = 0; y < height; y++)
+    {
+        const uint8_t* srcRow = data + ((height - 1 - y) * rowSize);
+        uint8_t* dstRow = pixels.data() + (y * rowSize);
+
+        memcpy(dstRow, srcRow, rowSize);
+    }
+
     stbi_image_free(data);
 
-    std::cout << "[Image] Loaded: " << path
+    std::cout << "[Image] Loaded (flipped): " << path
         << " (" << width << "x" << height << ")\n";
 
     return true;

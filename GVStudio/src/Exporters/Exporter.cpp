@@ -9,6 +9,7 @@
 #include <fstream>
 #include <iostream>
 #include <algorithm>
+#include <unordered_map>
 
 
 
@@ -70,12 +71,14 @@ static void BuildContextFolder(
 static void ExportFolder(
     const SceneFolder& folder,
     GV_ChunkExporter& exporter,
-    const GV_ExportContext& ctx);
+    const GV_ExportContext& ctx,
+    std::unordered_map<std::string, int>& instanceCounter);
 
 static void ExportObject(
     const SceneObject& obj,
     GV_ChunkExporter& exporter,
-    const GV_ExportContext& ctx);
+    const GV_ExportContext& ctx,
+    std::unordered_map<std::string, int>& instanceCounter);
 
 
 
@@ -109,7 +112,10 @@ bool GV_ExportScene(
         scenePayload.Align16();
     }
 
-    ExportFolder(sceneManager.GetRootFolder(), scenePayload, ctx);
+    // 🔥 Instance counter lives for entire export pass
+    std::unordered_map<std::string, int> instanceCounter;
+
+    ExportFolder(sceneManager.GetRootFolder(), scenePayload, ctx, instanceCounter);
 
     GV_ChunkExporter finalExporter;
 
@@ -136,6 +142,7 @@ bool GV_ExportScene(
 
     return true;
 }
+
 
 
 static void BuildContextFolder(
@@ -170,9 +177,9 @@ static void BuildContextFolder(
                 std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
 
                 if (ext == "bmp" || ext == "png" || ext == "jpg" || ext == "jpeg" || ext == "tga")
-{
-    ctx.RegisterTexture(asset);
-}
+                {
+                    ctx.RegisterTexture(asset);
+                }
                 else if (ext == "obj")
                 {
                     ctx.RegisterMesh(asset);
@@ -193,7 +200,8 @@ static void BuildContextFolder(
 static void ExportFolder(
     const SceneFolder& folder,
     GV_ChunkExporter& exporter,
-    const GV_ExportContext& ctx)
+    const GV_ExportContext& ctx,
+    std::unordered_map<std::string, int>& instanceCounter)
 {
     std::cout << "\n[Folder] " << folder.name
         << " | Objects: " << folder.objects.size()
@@ -207,13 +215,13 @@ static void ExportFolder(
             continue;
         }
 
-        ExportObject(*obj, exporter, ctx);
+        ExportObject(*obj, exporter, ctx, instanceCounter);
     }
 
     for (const auto& child : folder.children)
     {
         if (child)
-            ExportFolder(*child, exporter, ctx);
+            ExportFolder(*child, exporter, ctx, instanceCounter);
     }
 }
 
@@ -222,7 +230,8 @@ static void ExportFolder(
 static void ExportObject(
     const SceneObject& obj,
     GV_ChunkExporter& exporter,
-    const GV_ExportContext& ctx)
+    const GV_ExportContext& ctx,
+    std::unordered_map<std::string, int>& instanceCounter)
 {
     std::cout << "\n[Object] " << obj.name << "\n";
 
@@ -330,6 +339,17 @@ static void ExportObject(
             std::cout << "  [SKIP] No mesh assigned\n";
             return;
         }
+
+        // 🔥 FIX: convert base path → instance key
+        std::string base = mesh.meshName;
+        int& index = instanceCounter[base];
+
+        if (index == 0)
+            mesh.meshName = base;
+        else
+            mesh.meshName = base + "_inst_" + std::to_string(index);
+
+        index++;
 
         auto data = GV_Exporter<StaticMesh>::Export(mesh, ctx);
 

@@ -56,7 +56,7 @@ void Renderer::SetBakedLights(const std::vector<BakedLight>& lights)
 
 static unsigned int LoadTextureSTB(const std::string& path)
 {
-    stbi_set_flip_vertically_on_load(true);
+    //stbi_set_flip_vertically_on_load(true);
 
     int w, h, channels;
     unsigned char* data = stbi_load(path.c_str(), &w, &h, &channels, 0);

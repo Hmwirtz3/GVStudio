@@ -36,14 +36,29 @@ static bool FileExists(const std::string& path)
     return false;
 }
 
+static std::string NormalizeKey(const std::string& input)
+{
+    std::string fixed = input;
+
+    std::replace(fixed.begin(), fixed.end(), '\\', '/');
+
+    const std::string marker = "/Resources/";
+    size_t pos = fixed.find(marker);
+
+    if (pos != std::string::npos)
+        fixed = fixed.substr(pos + marker.length());
+
+    return fixed;
+}
+
 uint32_t GV_ExportContext::GetTextureID(const std::string& name) const
 {
     if (name.empty())
         return 0;
 
-    std::string resolved = ResolvePath(name);
+    std::string key = NormalizeKey(name);
 
-    auto it = textureMap.find(resolved);
+    auto it = textureMap.find(key);
     if (it != textureMap.end())
         return it->second;
 
@@ -82,7 +97,6 @@ void GV_ExportContext::SetProjectInfo(
     std::cout << "  ResourceFolder: " << m_resourceFolder << "\n";
 }
 
-// ✅ NEW FUNCTION (ONLY ADDITION)
 void GV_ExportContext::SetMeshData(
     const std::string& name,
     const GV_MeshData& data)
@@ -90,17 +104,48 @@ void GV_ExportContext::SetMeshData(
     if (name.empty())
         return;
 
-    meshData[name] = data;
+    std::string fixed = name;
 
-    // ensure it is registered consistently
-    if (meshMap.find(name) == meshMap.end())
+    std::replace(fixed.begin(), fixed.end(), '\\', '/');
+
+    std::string base = fixed;
+    std::string suffix;
+
+    size_t instPos = fixed.find("_inst_");
+    if (instPos != std::string::npos)
     {
-        uint32_t id = (uint32_t)meshes.size();
-        meshes.push_back(name);
-        meshMap[name] = id;
+        base = fixed.substr(0, instPos);
+        suffix = fixed.substr(instPos);
     }
 
-    std::cout << "[Mesh] Injected (renderer): " << name << "\n";
+    const std::string marker = "/Resources/";
+    size_t pos = base.find(marker);
+
+    if (pos != std::string::npos)
+    {
+        base = base.substr(pos + marker.length());
+    }
+
+    std::string finalKey = base + suffix;
+
+    meshData[finalKey] = data;
+
+    if (meshMap.find(finalKey) == meshMap.end())
+    {
+        uint32_t id = (uint32_t)meshes.size();
+        meshes.push_back(finalKey);
+        meshMap[finalKey] = id;
+    }
+
+    // ONLY NEEDED CHANGE:
+    // register textures discovered from OBJ/MTL submeshes
+    for (const auto& sm : data.submeshes)
+    {
+        if (!sm.texturePath.empty())
+            RegisterTexture(sm.texturePath);
+    }
+
+    std::cout << "[Mesh] Injected (renderer): " << finalKey << "\n";
 }
 
 // ============================================================
@@ -144,7 +189,7 @@ std::string GV_ExportContext::GetDirectory(const std::string& path) const
 }
 
 // ============================================================
-// TEXTURES (UNCHANGED)
+// TEXTURES
 // ============================================================
 
 uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
@@ -152,7 +197,8 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     if (name.empty())
         return 0;
 
-    std::string resolved = ResolvePath(name);
+    std::string key = NormalizeKey(name);
+    std::string resolved = IsAbsolutePath(name) ? name : ResolvePath(key);
 
     if (!FileExists(resolved))
     {
@@ -166,14 +212,14 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
         return 0;
     }
 
-    auto it = textureMap.find(resolved);
+    auto it = textureMap.find(key);
     if (it != textureMap.end())
         return it->second;
 
     uint32_t id = (uint32_t)textures.size() + 1;
 
     textures.push_back(resolved);
-    textureMap[resolved] = id;
+    textureMap[key] = id;
 
     std::cout << "[Texture] OK: " << resolved << " ID=" << id << "\n";
 
@@ -229,8 +275,6 @@ uint32_t GV_ExportContext::RegisterMesh(const std::string& name)
     return id;
 }
 
-// ============================================================
-// (rest unchanged)
 // ============================================================
 
 void GV_ExportContext::Clear()

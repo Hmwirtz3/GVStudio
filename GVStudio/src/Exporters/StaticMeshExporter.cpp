@@ -55,9 +55,7 @@ void GV_Exporter<StaticMesh>::Build(
 
     std::cout << "  Submeshes: " << meshData->submeshes.size() << "\n";
 
-    // ========================================================
-    // LOOP SUBMESHES
-    // ========================================================
+   
 
     for (size_t i = 0; i < meshData->submeshes.size(); i++)
     {
