@@ -3,8 +3,9 @@
 #include "imgui/imgui.h"
 #include "MiniMath/MiniMath.h"
 
-#include <iostream>
+#include <vector>
 #include <cmath>
+#include <algorithm>
 
 void SceneViewer::Resize(int width, int height)
 {
@@ -50,7 +51,8 @@ void SceneViewer::Update()
     }
 }
 
-void SceneViewer::Render(SceneFolder& scene,
+void SceneViewer::Render(
+    SceneFolder& scene,
     const std::string& resourceRoot,
     SceneObject* selectedObject)
 {
@@ -70,15 +72,42 @@ void SceneViewer::Render(SceneFolder& scene,
     std::vector<RenderItem> items;
     GatherScene::Collect(scene, resourceRoot, items);
 
+    auto& ctx = m_renderer.GetExportContext();
+    ctx.Clear();
+
+    for (const RenderItem& item : items)
+    {
+        if (item.type == RenderItemType::TexturedQuad)
+        {
+            if (!item.texturePath.empty())
+                ctx.RegisterTexture(item.texturePath);
+        }
+
+        if (item.type == RenderItemType::Mesh)
+        {
+            if (item.modelPath.empty())
+                continue;
+
+            Mesh& mesh = m_renderer.GetMeshSystem().GetOrLoad(item.modelPath);
+
+            for (auto& part : mesh.parts)
+            {
+                if (!part.texturePath.empty())
+                    ctx.RegisterTexture(part.texturePath);
+            }
+        }
+    }
+
     m_renderer.SetBakedLights(GatherScene::GetBakedLights());
 
     m_renderer.Begin(
         m_camera.GetView(),
-        m_camera.GetProjection());
+        m_camera.GetProjection()
+    );
 
     m_renderer.DrawGrid();
 
-    for (const auto& item : items)
+    for (const RenderItem& item : items)
     {
         if (item.type == RenderItemType::Mesh)
         {
@@ -86,18 +115,18 @@ void SceneViewer::Render(SceneFolder& scene,
             {
                 m_renderer.DrawModel(
                     item.modelPath,
-                    item.model);
+                    item.model
+                );
             }
         }
         else if (item.type == RenderItemType::CameraGizmo)
         {
             m_renderer.DrawCameraGizmo(
                 item.camPos,
-                item.camRot);
+                item.camRot
+            );
         }
     }
-
-    m_renderer.BakeScene();
 
     m_renderer.End();
 }
@@ -131,13 +160,21 @@ SceneObject* SceneViewer::PickObject(
     nearWorld = nearWorld / nearWorld.w;
     farWorld = farWorld / farWorld.w;
 
-    Vec3 rayOrigin = { nearWorld.x, nearWorld.y, nearWorld.z };
+    Vec3 rayOrigin =
+    {
+        nearWorld.x,
+        nearWorld.y,
+        nearWorld.z
+    };
+
     Vec3 rayDir = Normalize(
-        Vec3{
+        Vec3
+        {
             farWorld.x - nearWorld.x,
             farWorld.y - nearWorld.y,
             farWorld.z - nearWorld.z
-        });
+        }
+    );
 
     std::vector<RenderItem> items;
     GatherScene::Collect(scene, resourceRoot, items);
@@ -145,12 +182,13 @@ SceneObject* SceneViewer::PickObject(
     float closestT = 1e30f;
     SceneObject* hit = nullptr;
 
-    for (const auto& item : items)
+    for (const RenderItem& item : items)
     {
         if (item.modelPath.empty())
             continue;
 
-        Vec3 center = {
+        Vec3 center =
+        {
             item.model.m[12],
             item.model.m[13],
             item.model.m[14]

@@ -9,11 +9,9 @@
 #include "imgui/imgui_impl_opengl3.h"
 
 #include "Exporters/Exporter.h"
+#include "Renderer/Renderer.h"
 
 #include <filesystem>
-#include <iostream>
-#include <string>
-#include <cstring>
 
 namespace fs = std::filesystem;
 
@@ -54,10 +52,7 @@ GV_STUDIO::~GV_STUDIO()
 bool GV_STUDIO::InitSDLAndGL()
 {
     if (!SDL_Init(SDL_INIT_VIDEO))
-    {
-        printf("SDL_Init failed: %s\n", SDL_GetError());
         return false;
-    }
 
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
     SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
@@ -74,27 +69,17 @@ bool GV_STUDIO::InitSDLAndGL()
         SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 
     if (!m_window)
-    {
-        printf("SDL_CreateWindow failed: %s\n", SDL_GetError());
         return false;
-    }
 
     m_glContext = SDL_GL_CreateContext(m_window);
-
     if (!m_glContext)
-    {
-        printf("SDL_GL_CreateContext failed: %s\n", SDL_GetError());
         return false;
-    }
 
     if (!SDL_GL_MakeCurrent(m_window, m_glContext))
         return false;
 
     if (!gladLoadGLLoader((GLADloadproc)SDL_GL_GetProcAddress))
-    {
-        printf("Failed to initialize GLAD\n");
         return false;
-    }
 
     SDL_GL_SetSwapInterval(1);
     return true;
@@ -148,24 +133,13 @@ void GV_STUDIO::ShutdownSDLAndGL()
 void GV_STUDIO::InitProject()
 {
     fs::path root = fs::path(m_state.project.projectPath).parent_path();
-    fs::path fullSource = root / m_state.project.sourceFolder;
-
-    std::cout << "[GV_STUDIO] InitProject\n";
-    std::cout << "  ProjectRoot:  " << root.string() << "\n";
-    std::cout << "  SourcePath:   " << fullSource.string() << "\n";
 
     m_logicUnitRegistry.Clear();
-    m_logicUnitRegistry.ParseFolder(fullSource.string());
+    m_logicUnitRegistry.ParseFolder((root / m_state.project.sourceFolder).string());
 
-    fs::path fullResources = root / m_state.project.resourceFolder;
-    std::cout << "  ResourcePath: " << fullResources.string() << "\n";
+    m_resourceDatabase.BuildFolderTree((root / m_state.project.resourceFolder).string());
 
-    m_resourceDatabase.BuildFolderTree(fullResources.string());
-
-    fs::path fullScenePath = root / m_state.currentScene.scenePath;
-    std::cout << "  ScenePath:    " << fullScenePath.string() << "\n";
-
-    m_sceneManager.LoadScene(fullScenePath.string());
+    m_sceneManager.LoadScene((root / m_state.currentScene.scenePath).string());
 
     m_selectedObject = nullptr;
     m_selectedFolder = &m_rootFolder;
@@ -219,50 +193,53 @@ int GV_STUDIO::RUN()
 
             if (m_mainToolbar.ConsumeExportRequest())
             {
-                std::cout << "[App] Export triggered\n";
-
                 fs::path projectRoot =
                     fs::path(m_state.project.projectPath).parent_path();
 
                 fs::path dataFolder =
                     projectRoot / m_state.project.dataFolder;
 
-                fs::path scenePath = m_state.currentScene.scenePath;
-                std::string sceneName = scenePath.stem().string();
+                std::string sceneName =
+                    fs::path(m_state.currentScene.scenePath).stem().string();
 
                 fs::path outputPath =
                     dataFolder / (sceneName + ".bin");
 
-                std::cout << "[Export] Output Path: " << outputPath.string() << "\n";
+                SceneViewer& sceneViewer = m_viewportPanel.GetSceneViewer();
+                Renderer& renderer = sceneViewer.GetRenderer();
 
-                m_exportContext.Clear();
+                // Clear renderer export context
+                renderer.GetExportContext().Clear();
 
-                m_exportContext.SetProjectInfo(
+                // Set project info
+                renderer.GetExportContext().SetProjectInfo(
                     projectRoot.string(),
                     m_state.project.resourceFolder
                 );
 
-                SceneViewer& sceneViewer = m_viewportPanel.GetSceneViewer();
-                Renderer& renderer = sceneViewer.GetRenderer();
+                // Force one render pass so baking + export context fills
+                fs::path resourceRoot =
+                    fs::absolute(projectRoot / m_state.project.resourceFolder);
 
-                const auto& cache = renderer.GetMeshCache();
+                m_viewportPanel.Draw(
+                    m_sceneManager.GetRootFolder(),
+                    resourceRoot.string(),
+                    m_selectedObject
+                );
 
-                for (const auto& [path, mesh] : cache)
-                {
-                    GV_MeshData exportMesh = renderer.ConvertToExportMesh(mesh);
-                    m_exportContext.SetMeshData(path, exportMesh);
-                }
-
-                GV_ExportScene(m_sceneManager, outputPath.string(), m_exportContext);
+                // Export directly from renderer
+                GV_ExportScene(
+                    m_sceneManager,
+                    outputPath.string(),
+                    renderer.GetExportContext()
+                );
             }
 
             fs::path projectRoot =
                 fs::path(m_state.project.projectPath).parent_path();
 
             fs::path resourceRoot =
-                projectRoot / m_state.project.resourceFolder;
-
-            resourceRoot = fs::absolute(resourceRoot);
+                fs::absolute(projectRoot / m_state.project.resourceFolder);
 
             m_viewportPanel.Draw(
                 m_sceneManager.GetRootFolder(),

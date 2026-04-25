@@ -2,42 +2,29 @@
 #include "GVFramework/Scene/SceneObject.h"
 #include "GVFramework/Scene/SceneManager.h"
 #include "Renderer/Renderer.h"
+#include "Renderer/TerrainManager.h"
+#include "Renderer/TerrainGenerator.h"
 
 #include <filesystem>
 
 namespace fs = std::filesystem;
 
-/*===========================================================
-NEW: STATIC STORAGE FOR LIGHTS
-===========================================================*/
-
 static std::vector<BakedLight> g_bakedLights;
 
-/*===========================================================
-NEW: ACCESSOR
-===========================================================*/
+extern void FreeHeightmap(LoadedHeightmap& hm);
 
 const std::vector<BakedLight>& GatherScene::GetBakedLights()
 {
     return g_bakedLights;
 }
 
-/*===========================================================
-ORIGINAL COLLECT (UNCHANGED)
-===========================================================*/
-
 void GatherScene::Collect(SceneFolder& root,
     const std::string& resourceRoot,
     std::vector<RenderItem>& outItems)
 {
-    g_bakedLights.clear(); // 🔥 reset each gather
-
+    g_bakedLights.clear();
     CollectFolder(root, resourceRoot, outItems);
 }
-
-/*===========================================================
-COLLECT FOLDER (ONLY ADDITION IS LIGHT BLOCK)
-===========================================================*/
 
 void GatherScene::CollectFolder(SceneFolder& folder,
     const std::string& resourceRoot,
@@ -51,9 +38,6 @@ void GatherScene::CollectFolder(SceneFolder& folder,
 
         const GV_Logic_Unit& lu = *obj->def->def;
 
-        /*===================================================
-        NEW: BAKED LIGHT COLLECTION
-        ===================================================*/
         if (lu.chunkType == GV_CHUNK_BAKED_LIGHT)
         {
             BakedLight light{};
@@ -64,31 +48,68 @@ void GatherScene::CollectFolder(SceneFolder& folder,
                 const auto& value = obj->def->values[i];
                 const std::string& name = paramDef.name;
 
-                if (name == "posX") light.position.x = value.fval;
+                if (name == "posX")      light.position.x = value.fval;
                 else if (name == "posY") light.position.y = value.fval;
                 else if (name == "posZ") light.position.z = value.fval;
-
                 else if (name == "dirX") light.direction.x = value.fval;
                 else if (name == "dirY") light.direction.y = value.fval;
                 else if (name == "dirZ") light.direction.z = value.fval;
-
                 else if (name == "colorR") light.color.x = value.fval;
                 else if (name == "colorG") light.color.y = value.fval;
                 else if (name == "colorB") light.color.z = value.fval;
-
                 else if (name == "intensity") light.intensity = value.fval;
                 else if (name == "range") light.range = value.fval;
                 else if (name == "falloff") light.falloff = value.fval;
-
                 else if (name == "lightType") light.type = (int)value.fval;
             }
 
             g_bakedLights.push_back(light);
         }
 
-        /*===================================================
-        ORIGINAL LOGIC (UNCHANGED)
-        ===================================================*/
+        if (lu.chunkType == GV_CHUNK_HEIGHTMAP)
+        {
+            TerrainParams params{};
+            std::string heightmapPath;
+
+            for (size_t i = 0; i < obj->def->values.size(); ++i)
+            {
+                const auto& paramDef = obj->def->def->params[i];
+                const auto& value = obj->def->values[i];
+                const std::string& name = paramDef.name;
+
+                if (name == "sampleSpacing") params.sampleSpacing = value.fval;
+                else if (name == "heightScale") params.heightScale = value.fval;
+                else if (name == "baseHeight") params.baseHeight = value.fval;
+                else if (name == "heightmapTexture" && !value.sval.empty())
+                {
+                    fs::path full = fs::path(resourceRoot) / value.sval;
+                    heightmapPath = full.string();
+                }
+            }
+
+            if (params.sampleSpacing == 0.0f) params.sampleSpacing = 128.0f;
+            if (params.heightScale == 0.0f) params.heightScale = 50.0f;
+
+            if (!heightmapPath.empty())
+            {
+                LoadedHeightmap hm = TerrainGenerator::LoadHeightmap(heightmapPath);
+
+                if (hm.samples)
+                {
+                    TerrainTile* tiles = nullptr;
+                    uint32_t tileCount = 0;
+
+                    if (TerrainGenerator::GenerateTiles(hm, tiles, tileCount, params))
+                    {
+                        TerrainManager::SetTerrain(tiles, tileCount, params);
+                    }
+
+                    FreeHeightmap(hm);
+                }
+            }
+
+            continue;
+        }
 
         RenderItem item{};
         item.object = obj;
@@ -102,6 +123,28 @@ void GatherScene::CollectFolder(SceneFolder& folder,
                 item.camPos,
                 item.camRot
             );
+        }
+        else if (lu.chunkType == GV_CHUNK_TEXTURE)
+        {
+            item.type = RenderItemType::TexturedQuad;
+
+            for (size_t i = 0; i < obj->def->values.size(); ++i)
+            {
+                const auto& paramDef = obj->def->def->params[i];
+                const auto& value = obj->def->values[i];
+                const std::string& name = paramDef.name;
+
+                if (name == "posX") item.posX = value.fval;
+                else if (name == "posY") item.posY = value.fval;
+                else if (name == "width") item.width = value.ival;
+                else if (name == "height") item.height = value.ival;
+                else if (name == "visible") item.visible = value.bval;
+                else if (name == "texture" && !value.sval.empty())
+                {
+                    fs::path full = fs::path(resourceRoot) / value.sval;
+                    item.texturePath = full.string();
+                }
+            }
         }
         else
         {
@@ -120,10 +163,6 @@ void GatherScene::CollectFolder(SceneFolder& folder,
     for (auto& child : folder.children)
         CollectFolder(*child, resourceRoot, outItems);
 }
-
-/*===========================================================
-UNCHANGED BELOW
-===========================================================*/
 
 Mat4 GatherScene::BuildModelFromLogicUnit(
     GV_Logic_Unit_Instance* inst,
@@ -189,7 +228,7 @@ void GatherScene::ExtractCameraFromLogicUnit(
         else if (name == "positionZ") outPos.z = value.fval;
 
         else if (name == "rotationPitch") outRot.x = value.fval;
-        else if (name == "rotationYaw")   outRot.y = value.fval;
-        else if (name == "rotationRoll")  outRot.z = value.fval;
+        else if (name == "rotationYaw") outRot.y = value.fval;
+        else if (name == "rotationRoll") outRot.z = value.fval;
     }
 }

@@ -1,109 +1,46 @@
 ﻿#pragma once
 
 #include "MiniMath/MiniMath.h"
+#include "Renderer/MeshBaker.h"
+#include "Renderer/MeshTypes.h"
+#include "Renderer/MeshSystem.h"
+#include "Renderer/TextureSystem.h"
+#include "Renderer/GraphicsDevice.h"
+#include "Renderer/Shaders/Shader.h"
 #include "Exporters/ExportContext.h"
+
 #include <string>
-#include <unordered_map>
 #include <vector>
-
-
-
-struct BakedLight
-{
-    int type = 0; // 0 = point, 1 = directional
-
-    Vec3 position;
-    Vec3 direction;
-
-    Vec3 color = { 1.0f, 1.0f, 1.0f };
-
-    float intensity = 1.0f;
-    float range = 10.0f;
-    float falloff = 2.0f;
-};
-
-
-
-struct Triangle
-{
-    Vec3 a, b, c;
-};
-
-
-
-struct SubMesh
-{
-    unsigned int vao = 0;
-    unsigned int vbo = 0;
-    unsigned int texture = 0;
-    int vertexCount = 0;
-
-    std::string texturePath;
-
-    
-    std::vector<float> vertices;
-};
-
-
-
-struct Mesh
-{
-    std::vector<SubMesh> parts;
-};
-
-struct SceneBakeEntry
-{
-    Mesh* mesh;
-    Mat4 model;
-};
-struct MeshInstance
-{
-    Mesh mesh;
-    Mat4 model;
-};
-
-
-
-
+#include <unordered_map>
+#include <cstdint>
 
 class Renderer
 {
 public:
     void Init();
     void Shutdown();
-
     void Resize(int width, int height);
 
     void Begin(const Mat4& view, const Mat4& proj);
     void End();
 
+    void SetBakedLights(const std::vector<BakedLight>& lights);
+    
+
     void DrawGrid();
     void DrawCube(const Mat4& model);
+    void DrawCameraGizmo(const Vec3& pos, const Vec3& rot);
     void DrawModel(const std::string& path, const Mat4& model);
 
-    void DrawCameraGizmo(const Vec3& pos, const Vec3& rot);
+    const Mesh* GetBakedMesh(const std::string& key) const;
 
-    void BakeScene();
+    GV::MeshSystem& GetMeshSystem();
 
-    
-    void SetBakedLights(const std::vector<BakedLight>& lights);
-    void BakeMesh(Mesh& mesh, const Mat4& model);
-    void RebakeModel(const std::string& path);
-    GV_MeshData ConvertToExportMesh(const Mesh& mesh);
-    const std::unordered_map<std::string, Mesh>& GetMeshCache() const;
-    std::unordered_map<std::string, int> m_instanceDrawIndex;
+    uint32_t GetColorTexture() const;
 
-    struct BakedInstance
-    {
-        std::vector<SubMesh> parts;
-    };
+    void ClearScene();
 
-    std::unordered_map<std::string, std::vector<BakedInstance>> m_bakedInstances;
-    std::unordered_map<std::string, Mesh> m_meshCacheOriginal;
-
-    unsigned int GetColorTexture() const;
-    std::unordered_map<std::string, std::vector<Mat4>> m_meshInstances;
-    std::unordered_map<std::string, Mesh> m_sourceMeshes;
+    GV_ExportContext& GetExportContext();
 
 private:
     void CreateFramebuffer();
@@ -111,38 +48,46 @@ private:
     void CreateGrid();
     void CreateCube();
 
-    Mesh LoadOBJ(const std::string& path);
+
+    void UploadMesh(Mesh& mesh);
+    void FreeMeshGpu(Mesh& mesh);
+    Mesh& GetBakedMeshForDraw(const std::string& key, const Mesh& source, const Mat4& model);
 
 private:
-    unsigned int m_fbo = 0;
-    unsigned int m_colorTex = 0;
-    unsigned int m_depthRbo = 0;
+    int m_width = 1280;
+    int m_height = 720;
 
-    unsigned int m_shader = 0;
+    uint32_t m_fbo = 0;
+    uint32_t m_colorTex = 0;
+    uint32_t m_depthRbo = 0;
 
-    unsigned int m_gridVAO = 0;
-    unsigned int m_gridVBO = 0;
-
-    unsigned int m_cubeVAO = 0;
-    unsigned int m_cubeVBO = 0;
-
-
-    std::unordered_map<std::string, Mesh> m_meshCache;
-
-  
-    std::vector<BakedLight> m_bakedLights;
-
-    int m_width = 1;
-    int m_height = 1;
-
-    int m_uViewLoc = -1;
-    int m_uProjLoc = -1;
-    int m_uModelLoc = -1;
-    int m_uColorLoc = -1;
-
+    uint32_t m_gridVAO = 0;
+    uint32_t m_gridVBO = 0;
     int m_gridVertexCount = 0;
+
+    uint32_t m_cubeVAO = 0;
+    uint32_t m_cubeVBO = 0;
     int m_cubeVertexCount = 0;
 
     Mat4 m_view;
     Mat4 m_proj;
+
+    GV::Shader m_shader;
+    int m_uViewLoc = -1;
+    int m_uProjLoc = -1;
+    int m_uModelLoc = -1;
+    int m_uColorLoc = -1;
+    int m_uUseTextureLoc = -1;
+    int m_uTexLoc = -1;
+
+    GV_ExportContext m_exportContext;
+
+    GV::GraphicsDevice m_graphics;
+    GV::MeshSystem m_meshSystem;
+    GV::TextureSystem m_textureSystem;
+
+    std::vector<BakedLight> m_bakedLights;
+
+    std::unordered_map<std::string, Mesh> m_bakedMeshes;
+    std::unordered_map<std::string, int> m_instanceDrawIndex;
 };

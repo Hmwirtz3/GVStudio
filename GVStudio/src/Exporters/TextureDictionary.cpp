@@ -9,20 +9,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "3rdParty/STB/stb_image.h"
 
-// ============================================
-// PATH HELPERS
-// ============================================
-
 static bool IsAbsolutePath(const std::string& path)
 {
     if (path.size() > 2 && path[1] == ':') return true;
     if (!path.empty() && (path[0] == '/' || path[0] == '\\')) return true;
     return false;
 }
-
-// ============================================
-// LOAD IMAGE (ANY FORMAT)
-// ============================================
 
 static bool LoadImageRGBA(
     const std::string& path,
@@ -37,7 +29,7 @@ static bool LoadImageRGBA(
         &width,
         &height,
         &channels,
-        4 // force RGBA
+        4
     );
 
     if (!data)
@@ -47,19 +39,9 @@ static bool LoadImageRGBA(
         return false;
     }
 
-    // allocate output
     pixels.resize(width * height * 4);
 
-    const int rowSize = width * 4;
-
-    // flip vertically
-    for (int y = 0; y < height; y++)
-    {
-        const uint8_t* srcRow = data + ((height - 1 - y) * rowSize);
-        uint8_t* dstRow = pixels.data() + (y * rowSize);
-
-        memcpy(dstRow, srcRow, rowSize);
-    }
+    memcpy(pixels.data(), data, width * height * 4);
 
     stbi_image_free(data);
 
@@ -68,10 +50,6 @@ static bool LoadImageRGBA(
 
     return true;
 }
-
-// ============================================
-// FORMAT HELPERS
-// ============================================
 
 enum TextureFormat
 {
@@ -103,10 +81,6 @@ static uint16_t To4444(uint8_t r, uint8_t g, uint8_t b, uint8_t a)
         ((g >> 4) << 4) |
         ((r >> 4));
 }
-
-// ============================================
-// EXPORTER IMPLEMENTATION
-// ============================================
 
 void GV_Exporter<TextureDictionary>::Build(
     const TextureDictionary&,
@@ -178,13 +152,9 @@ void GV_Exporter<TextureDictionary>::Build(
             memcpy(finalPixels.data(), pixels.data(), finalPixels.size());
         }
 
-        // ----------------------------------------
-        // BUILD TEXTURE CHUNK PAYLOAD
-        // ----------------------------------------
-
         GV_ChunkExporter texPayload;
 
-        uint32_t textureID = i + 1;
+        uint32_t textureID = ctx.GetTextureID(name);
         uint32_t dataSize = (uint32_t)finalPixels.size();
 
         texPayload.Write(textureID);
@@ -193,14 +163,9 @@ void GV_Exporter<TextureDictionary>::Build(
         texPayload.Write(format);
         texPayload.Write(dataSize);
 
-        // ✅ ONLY CHANGE: ALIGN BEFORE PIXEL DATA
         texPayload.Align16();
 
         texPayload.WriteData(finalPixels.data(), dataSize);
-
-        // ----------------------------------------
-        // APPEND AS CHILD CHUNK
-        // ----------------------------------------
 
         out.AppendChunk(
             GV_CHUNK_TEXTURE_NATIVE,
@@ -209,10 +174,6 @@ void GV_Exporter<TextureDictionary>::Build(
         );
     }
 }
-
-// ============================================
-// CHUNK TYPE
-// ============================================
 
 uint32_t GV_Exporter<TextureDictionary>::GetChunkType()
 {

@@ -64,10 +64,6 @@ void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::v
 
 
 
-static void BuildContextFolder(
-    const SceneFolder& folder,
-    GV_ExportContext& ctx);
-
 static void ExportFolder(
     const SceneFolder& folder,
     GV_ChunkExporter& exporter,
@@ -90,13 +86,10 @@ bool GV_ExportScene(
     std::cout << "\n========== EXPORT START ==========\n";
     std::cout << "[Exporter] Output: " << outputPath << "\n";
 
-    std::cout << "\n[Exporter] Building context...\n";
-    BuildContextFolder(sceneManager.GetRootFolder(), ctx);
-
     const auto& textures = ctx.GetTextures();
     const auto& meshes = ctx.GetMeshes();
 
-    std::cout << "[Exporter] Context built\n";
+    std::cout << "[Exporter] Using renderer context\n";
     std::cout << "  Textures: " << textures.size() << "\n";
     std::cout << "  Meshes:   " << meshes.size() << "\n";
 
@@ -112,7 +105,6 @@ bool GV_ExportScene(
         scenePayload.Align16();
     }
 
-    // 🔥 Instance counter lives for entire export pass
     std::unordered_map<std::string, int> instanceCounter;
 
     ExportFolder(sceneManager.GetRootFolder(), scenePayload, ctx, instanceCounter);
@@ -141,58 +133,6 @@ bool GV_ExportScene(
     std::cout << "========== EXPORT END ==========\n\n";
 
     return true;
-}
-
-
-
-static void BuildContextFolder(
-    const SceneFolder& folder,
-    GV_ExportContext& ctx)
-{
-    for (const auto& obj : folder.objects)
-    {
-        if (!obj || !obj->def || !obj->def->def)
-            continue;
-
-        const GV_Logic_Unit& lu = *obj->def->def;
-
-        size_t count = std::min(lu.params.size(), obj->def->values.size());
-
-        for (size_t i = 0; i < count; i++)
-        {
-            const LU_Param_Def& pDef = lu.params[i];
-            const LU_Param_Val& val = obj->def->values[i];
-
-            if (pDef.type == ParamType::Asset && !val.sval.empty())
-            {
-                const std::string& asset = val.sval;
-
-                std::cout << "[Context] " << asset << "\n";
-
-                auto extPos = asset.find_last_of('.');
-                if (extPos == std::string::npos)
-                    continue;
-
-                std::string ext = asset.substr(extPos + 1);
-                std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
-
-                if (ext == "bmp" || ext == "png" || ext == "jpg" || ext == "jpeg" || ext == "tga")
-                {
-                    ctx.RegisterTexture(asset);
-                }
-                else if (ext == "obj")
-                {
-                    ctx.RegisterMesh(asset);
-                }
-            }
-        }
-    }
-
-    for (const auto& child : folder.children)
-    {
-        if (child)
-            BuildContextFolder(*child, ctx);
-    }
 }
 
 
@@ -340,7 +280,6 @@ static void ExportObject(
             return;
         }
 
-        // 🔥 FIX: convert base path → instance key
         std::string base = mesh.meshName;
         int& index = instanceCounter[base];
 
@@ -381,6 +320,7 @@ static void ExportObject(
         }
 
         uint32_t textureID = ctx.GetTextureID(textureName);
+
 
         std::cout << "  TextureID: " << textureID << "\n";
 

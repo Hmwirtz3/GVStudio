@@ -16,6 +16,15 @@ struct Vec3
     Vec3 operator*(float s) const { return { x * s, y * s, z * s }; }
 };
 
+struct Vec2
+{
+    float x;
+    float y;
+
+    Vec2() : x(0), y(0) {}
+    Vec2(float _x, float _y) : x(_x), y(_y) {}
+};
+
 inline float Dot(const Vec3& a, const Vec3& b)
 {
     return a.x * b.x + a.y * b.y + a.z * b.z;

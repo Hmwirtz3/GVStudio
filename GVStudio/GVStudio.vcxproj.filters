@@ -139,6 +139,12 @@
     <Filter Include="Header Files\3rdParty\STB">
       <UniqueIdentifier>{01f19cf1-e0d3-4b29-809d-05a39676ff87}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Renderer\Shaders">
+      <UniqueIdentifier>{d2b229c4-7a8a-4ce3-a973-68a0fd5cdd9f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Renderer\Shaders">
+      <UniqueIdentifier>{81bcbdfa-fce6-499b-99ab-60f49a192fc7}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -263,6 +269,36 @@
     </ClCompile>
     <ClCompile Include="src\Viewports\Toolbars\MainToolbar\ExporterTab.cpp">
       <Filter>Source Files\Viewports\Toolbars\MainToolbar</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\TerrainGenerator.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\TerrainManager.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\TerrainRenderer.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\GraphicsDevice.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\MeshExport.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\MeshSytstem.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\OBJLoader.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\TextureSystem.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\MeshBaker.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\Shaders\Shader.cpp">
+      <Filter>Source Files\Renderer\Shaders</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -463,6 +499,39 @@
     </ClInclude>
     <ClInclude Include="include\3rdParty\STB\stb_image.h">
       <Filter>Header Files\3rdParty\STB</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TerrainManager.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TerrainRenderer.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TerrainGenerator.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\GraphicsDevice.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\MeshExport.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\MeshSystem.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\OBJLoader.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TextureSystem.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\MeshTypes.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\MeshBaker.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\Shaders\Shader.h">
+      <Filter>Header Files\Renderer\Shaders</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

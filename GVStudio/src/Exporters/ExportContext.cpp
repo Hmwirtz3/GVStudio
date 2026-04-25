@@ -8,9 +8,13 @@
 #include <map>
 #include <cstdio>
 
-// ============================================================
-// PATH HELPERS
-// ============================================================
+static uint32_t HashID(uint32_t id)
+{
+    uint32_t hash = 2166136261u;
+    hash ^= id;
+    hash *= 16777619u;
+    return hash ? hash : 1;
+}
 
 static bool IsAbsolutePath(const std::string& path)
 {
@@ -65,10 +69,6 @@ uint32_t GV_ExportContext::GetTextureID(const std::string& name) const
     return 0;
 }
 
-// ============================================================
-// TEXTURE FORMAT SUPPORT (FIXED)
-// ============================================================
-
 static bool IsSupportedTexture(const std::string& path)
 {
     std::string lower = path;
@@ -80,10 +80,6 @@ static bool IsSupportedTexture(const std::string& path)
         lower.find(".jpeg") != std::string::npos ||
         lower.find(".tga") != std::string::npos);
 }
-
-// ============================================================
-// SETTERS
-// ============================================================
 
 void GV_ExportContext::SetProjectInfo(
     const std::string& root,
@@ -137,20 +133,14 @@ void GV_ExportContext::SetMeshData(
         meshMap[finalKey] = id;
     }
 
-    // ONLY NEEDED CHANGE:
-    // register textures discovered from OBJ/MTL submeshes
     for (const auto& sm : data.submeshes)
     {
         if (!sm.texturePath.empty())
             RegisterTexture(sm.texturePath);
     }
 
-    std::cout << "[Mesh] Injected (renderer): " << finalKey << "\n";
+    //std::cout << "[Mesh] Injected (renderer): " << finalKey << "\n";
 }
-
-// ============================================================
-// PATH
-// ============================================================
 
 std::string GV_ExportContext::ResolvePath(const std::string& path) const
 {
@@ -188,10 +178,6 @@ std::string GV_ExportContext::GetDirectory(const std::string& path) const
     return path.substr(0, pos + 1);
 }
 
-// ============================================================
-// TEXTURES
-// ============================================================
-
 uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
 {
     if (name.empty())
@@ -216,24 +202,21 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     if (it != textureMap.end())
         return it->second;
 
-    uint32_t id = (uint32_t)textures.size() + 1;
+    uint32_t sequentialID = (uint32_t)textures.size() + 1;
+    uint32_t hashedID = HashID(sequentialID);
 
     textures.push_back(resolved);
-    textureMap[key] = id;
+    textureMap[key] = hashedID;
 
-    std::cout << "[Texture] OK: " << resolved << " ID=" << id << "\n";
+    std::cout << "[Texture] OK: " << resolved << " ID=" << hashedID << "\n";
 
-    return id;
+    return hashedID;
 }
 
 const std::vector<std::string>& GV_ExportContext::GetTextures() const
 {
     return textures;
 }
-
-// ============================================================
-// MESH STORAGE
-// ============================================================
 
 const GV_MeshData* GV_ExportContext::GetMeshData(const std::string& name) const
 {
@@ -274,8 +257,6 @@ uint32_t GV_ExportContext::RegisterMesh(const std::string& name)
 
     return id;
 }
-
-// ============================================================
 
 void GV_ExportContext::Clear()
 {

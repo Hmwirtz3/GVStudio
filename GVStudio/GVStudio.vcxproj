@@ -109,6 +109,7 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <AdditionalIncludeDirectories>$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,11 +129,25 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalIncludeDirectories>$(ProjectDir)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <OpenMPSupport>true</OpenMPSupport>
+      <!-- actual performance flags -->
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>$(ProjectDir)\libs;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL3/SDL3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy /Y /D "$(ProjectDir)\bin\SDL3.dll" "$(OutDir)"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdParty\glad.c" />
@@ -162,7 +177,17 @@
     <ClCompile Include="src\MiniXml\SceneXml.cpp" />
     <ClCompile Include="src\Platform\WindowsFileDialog.cpp" />
     <ClCompile Include="src\Renderer\GatherScene.cpp" />
+    <ClCompile Include="src\Renderer\GraphicsDevice.cpp" />
+    <ClCompile Include="src\Renderer\MeshBaker.cpp" />
+    <ClCompile Include="src\Renderer\MeshExport.cpp" />
+    <ClCompile Include="src\Renderer\MeshSytstem.cpp" />
+    <ClCompile Include="src\Renderer\OBJLoader.cpp" />
     <ClCompile Include="src\Renderer\Renderer.cpp" />
+    <ClCompile Include="src\Renderer\Shaders\Shader.cpp" />
+    <ClCompile Include="src\Renderer\TerrainGenerator.cpp" />
+    <ClCompile Include="src\Renderer\TerrainManager.cpp" />
+    <ClCompile Include="src\Renderer\TerrainRenderer.cpp" />
+    <ClCompile Include="src\Renderer\TextureSystem.cpp" />
     <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp" />
     <ClCompile Include="src\Viewports\Panels\ResourceDatabaseTab.cpp" />
     <ClCompile Include="src\Viewports\Panels\LogicUnitInspector.cpp" />
@@ -230,7 +255,18 @@
     <ClInclude Include="include\MiniXml\SceneXml.h" />
     <ClInclude Include="include\Platform\WindowsFileDialog.h" />
     <ClInclude Include="include\Renderer\GatherScene.h" />
+    <ClInclude Include="include\Renderer\GraphicsDevice.h" />
+    <ClInclude Include="include\Renderer\MeshBaker.h" />
+    <ClInclude Include="include\Renderer\MeshExport.h" />
+    <ClInclude Include="include\Renderer\MeshSystem.h" />
+    <ClInclude Include="include\Renderer\MeshTypes.h" />
+    <ClInclude Include="include\Renderer\OBJLoader.h" />
     <ClInclude Include="include\Renderer\Renderer.h" />
+    <ClInclude Include="include\Renderer\Shaders\Shader.h" />
+    <ClInclude Include="include\Renderer\TerrainGenerator.h" />
+    <ClInclude Include="include\Renderer\TerrainManager.h" />
+    <ClInclude Include="include\Renderer\TerrainRenderer.h" />
+    <ClInclude Include="include\Renderer\TextureSystem.h" />
     <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h" />
     <ClInclude Include="include\Viewports\Panels\ResourceDatabaseTab.h" />
     <ClInclude Include="include\Viewports\Panels\LogicUnitInspector.h" />
