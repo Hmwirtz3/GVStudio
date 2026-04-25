@@ -188,13 +188,13 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
 
     if (!FileExists(resolved))
     {
-        std::cout << "[Texture] SKIP (missing): " << resolved << "\n";
+        //std::cout << "[Texture] SKIP (missing): " << resolved << "\n";
         return 0;
     }
 
     if (!IsSupportedTexture(resolved))
     {
-        std::cout << "[Texture] SKIP (unsupported): " << resolved << "\n";
+        //std::cout << "[Texture] SKIP (unsupported): " << resolved << "\n";
         return 0;
     }
 
@@ -208,7 +208,7 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     textures.push_back(resolved);
     textureMap[key] = hashedID;
 
-    std::cout << "[Texture] OK: " << resolved << " ID=" << hashedID << "\n";
+    //std::cout << "[Texture] OK: " << resolved << " ID=" << hashedID << "\n";
 
     return hashedID;
 }

@@ -30,5 +30,8 @@ namespace GV
             const Mat4& model,
             const std::vector<BakedLight>& bakedLights
         );
+
+        static void ClearShadowCasters();
+        static void AddShadowCaster(const Mesh& mesh, const Mat4& model);
     };
 }
