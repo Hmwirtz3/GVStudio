@@ -48,7 +48,7 @@ void GatherScene::CollectFolder(SceneFolder& folder,
                 const auto& value = obj->def->values[i];
                 const std::string& name = paramDef.name;
 
-                if (name == "posX")      light.position.x = value.fval;
+                if (name == "posX") light.position.x = value.fval;
                 else if (name == "posY") light.position.y = value.fval;
                 else if (name == "posZ") light.position.z = value.fval;
                 else if (name == "dirX") light.direction.x = value.fval;
@@ -146,6 +146,29 @@ void GatherScene::CollectFolder(SceneFolder& folder,
                 }
             }
         }
+        else if (lu.chunkType == GV_CHUNK_AREA_TRIGGER_BOX)
+        {
+            item.type = RenderItemType::trigger;
+            item.model = Mat4::Identity();
+            item.visible = true;
+
+            for (size_t i = 0; i < obj->def->values.size(); ++i)
+            {
+                const auto& paramDef = obj->def->def->params[i];
+                const auto& value = obj->def->values[i];
+                const std::string& name = paramDef.name;
+
+                if (name == "posX") item.posX = value.fval;
+                else if (name == "posY") item.posY = value.fval;
+                else if (name == "posZ") item.posZ = value.fval;
+
+                else if (name == "sizeX") item.width = (int)value.fval;
+                else if (name == "sizeY") item.sizeY = (int)value.fval;
+                else if (name == "sizeZ") item.height = (int)value.fval;
+
+                else if (name == "visible") item.visible = value.bval;
+            }
+        }
         else
         {
             item.type = RenderItemType::Mesh;
@@ -198,6 +221,7 @@ Mat4 GatherScene::BuildModelFromLogicUnit(
         {
             fs::path full = fs::path(resourceRoot) / value.sval;
             outModelPath = full.string();
+           
         }
     }
 

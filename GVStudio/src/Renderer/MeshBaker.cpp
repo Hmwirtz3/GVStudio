@@ -237,18 +237,8 @@ namespace GV
         {
             float* v = part.vertices.data();
 
-            // ----------------------------------------------------------------
-            // PASS 1 — build smooth per-vertex normals.
-            //
-            // The OBJ loader has no stored normals, so we derive them.
-            // Flat shading (one normal per triangle) produces visible facets.
-            // Smooth shading averages every face normal that touches a vertex
-            // position, blending the lighting across shared edges.
-            //
-            // We key the accumulation map on quantised world-space position so
-            // that vertices at the same location (but duplicated by the loader
-            // for different UVs) are treated as one point.
-            // ----------------------------------------------------------------
+            
+            
 
             std::vector<Vec3> smoothNorm(part.vertexCount, { 0,0,0 });
 

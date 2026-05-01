@@ -40,12 +40,11 @@ static bool LoadImageRGBA(
     }
 
     pixels.resize(width * height * 4);
-
     memcpy(pixels.data(), data, width * height * 4);
 
     stbi_image_free(data);
 
-    std::cout << "[Image] Loaded (flipped): " << path
+    std::cout << "[Image] Loaded: " << path
         << " (" << width << "x" << height << ")\n";
 
     return true;
@@ -89,11 +88,28 @@ void GV_Exporter<TextureDictionary>::Build(
 {
     const auto& textures = ctx.GetTextures();
 
-    std::cout << "\n[TextureDictionary] Count: " << textures.size() << "\n";
+    std::cout << "\n==============================\n";
+    std::cout << "[TextureDictionary] Build Start\n";
+    std::cout << "Texture Count: " << textures.size() << "\n";
+
+    // Dump all textures + IDs BEFORE processing
+    std::cout << "\n[TextureDictionary] Context Dump:\n";
+    for (size_t i = 0; i < textures.size(); i++)
+    {
+        const std::string& name = textures[i];
+        uint32_t id = ctx.GetTextureID(name);
+
+        std::cout << "  [" << i << "] "
+            << "Name: " << name
+            << " | ID: " << id << "\n";
+    }
+    std::cout << "------------------------------\n";
 
     for (uint32_t i = 0; i < textures.size(); i++)
     {
         const std::string& name = textures[i];
+
+        std::cout << "\n[Texture] Processing: " << name << "\n";
 
         int width = 0;
         int height = 0;
@@ -103,13 +119,17 @@ void GV_Exporter<TextureDictionary>::Build(
             ? name
             : ctx.ResolvePath(name);
 
+        std::cout << "  Resolved Path: " << fullPath << "\n";
+
         if (!LoadImageRGBA(fullPath, width, height, rgba))
         {
-            std::cerr << "[Texture] Failed: " << fullPath << "\n";
+            std::cerr << "[Texture] FAILED LOAD → skipping\n";
             continue;
         }
 
         bool hasAlpha = HasAlpha(rgba);
+
+        std::cout << "  Alpha: " << (hasAlpha ? "YES" : "NO") << "\n";
 
         uint32_t format = TEX_RGB565;
         std::vector<char> finalPixels;
@@ -154,8 +174,14 @@ void GV_Exporter<TextureDictionary>::Build(
 
         GV_ChunkExporter texPayload;
 
-        uint32_t textureID = ctx.GetTextureID(name);
+        uint32_t textureID = ctx.GetTextureID(fullPath);
         uint32_t dataSize = (uint32_t)finalPixels.size();
+
+        std::cout << "  FINAL TextureID: " << textureID << "\n";
+        std::cout << "  Width: " << width
+            << " Height: " << height << "\n";
+        std::cout << "  Format: " << format << "\n";
+        std::cout << "  DataSize: " << dataSize << "\n";
 
         texPayload.Write(textureID);
         texPayload.Write((uint32_t)width);
@@ -167,12 +193,17 @@ void GV_Exporter<TextureDictionary>::Build(
 
         texPayload.WriteData(finalPixels.data(), dataSize);
 
+        std::cout << "  Writing GV_CHUNK_TEXTURE_NATIVE\n";
+
         out.AppendChunk(
             GV_CHUNK_TEXTURE_NATIVE,
             1,
             texPayload.buffer
         );
     }
+
+    std::cout << "\n[TextureDictionary] Build COMPLETE\n";
+    std::cout << "==============================\n\n";
 }
 
 uint32_t GV_Exporter<TextureDictionary>::GetChunkType()

@@ -72,6 +72,7 @@ void Renderer::Begin(const Mat4& view, const Mat4& proj)
     m_instanceDrawIndex.clear();
 
     m_graphics.BeginFrame(m_fbo, m_width, m_height);
+
 }
 
 void Renderer::End()
@@ -597,7 +598,8 @@ void Renderer::DrawModel(const std::string& path, const Mat4& model)
     {
         if (!part.texturePath.empty())
         {
-            uint32_t tex = m_textureSystem.GetOrLoad(part.texturePath);
+            std::string resolved = m_exportContext.ResolvePath(part.texturePath);
+            uint32_t tex = m_textureSystem.GetOrLoad(resolved);
 
             if (tex)
             {

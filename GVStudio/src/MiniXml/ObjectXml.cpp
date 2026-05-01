@@ -101,8 +101,13 @@ namespace ObjectXml
                 break;
 
             case ParamType::Bool:
-                pVal.bval = (val == "true" || val == "1");
+            {
+                if (val == "true" || val == "1")
+                    pVal.bval = true;
+                else
+                    pVal.bval = false;
                 break;
+            }
 
             case ParamType::String:
             case ParamType::Event:

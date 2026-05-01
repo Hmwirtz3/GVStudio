@@ -6,6 +6,9 @@
 #include "GVFramework/Scene/SceneManager.h"
 #include "GVFramework/Scene/SceneObject.h"
 
+struct GV_Scene_Info;
+
+
 class SceneManager;
 
 class SceneExplorer
@@ -33,6 +36,8 @@ private:
     bool m_isVisible = true;
 
     char m_renameBuffer[256] = {};
+
+    GV_Scene_Info* m_sceneRenaming = nullptr;
 
     SceneFolder* m_newFolderParent = nullptr;
     SceneFolder* m_folderPendingDelete = nullptr;

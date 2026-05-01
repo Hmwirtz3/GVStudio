@@ -205,7 +205,7 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     uint32_t sequentialID = (uint32_t)textures.size() + 1;
     uint32_t hashedID = HashID(sequentialID);
 
-    textures.push_back(resolved);
+    textures.push_back(key);
     textureMap[key] = hashedID;
 
     //std::cout << "[Texture] OK: " << resolved << " ID=" << hashedID << "\n";

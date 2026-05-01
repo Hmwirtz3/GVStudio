@@ -2,6 +2,7 @@
 #include "Renderer/GatherScene.h"
 #include "imgui/imgui.h"
 #include "MiniMath/MiniMath.h"
+#include "3rdParty/glad/glad.h"
 
 #include <vector>
 #include <cmath>
@@ -125,6 +126,41 @@ void SceneViewer::Render(
                 item.camPos,
                 item.camRot
             );
+        }
+        else if (item.type == RenderItemType::trigger)
+        {
+            if (!item.visible)
+                continue;
+
+            Mat4 model =
+                Translate({ item.posX, item.posY, item.posZ }) *
+                Scale({ (float)item.width, item.sizeY, (float)item.height });
+
+            glDisable(GL_DEPTH_TEST);
+            m_renderer.DrawCube(model);
+            glEnable(GL_DEPTH_TEST);
+        }
+    }
+
+    if (selectedObject)
+    {
+        for (const RenderItem& item : items)
+        {
+            if (item.object == selectedObject)
+            {
+                if (item.type == RenderItemType::trigger)
+                    break;
+
+                Mat4 cubeModel =
+                    item.model *
+                    Scale({ 0.2f, 0.2f, 0.2f });
+
+                glDisable(GL_DEPTH_TEST);
+                m_renderer.DrawCube(cubeModel);
+                glEnable(GL_DEPTH_TEST);
+
+                break;
+            }
         }
     }
 

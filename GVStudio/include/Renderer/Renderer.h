@@ -14,6 +14,13 @@
 #include <unordered_map>
 #include <cstdint>
 
+struct BakedEntry
+{
+    Mesh mesh;
+    Mat4 lastModel;
+    bool baked = false;
+};
+
 class Renderer
 {
 public:

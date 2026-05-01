@@ -14,7 +14,8 @@ enum class RenderItemType
 {
     Mesh,
     CameraGizmo,
-    TexturedQuad
+    TexturedQuad,
+    trigger
 };
 
 struct RenderItem
@@ -31,6 +32,8 @@ struct RenderItem
 
     float posX = 0.0f;
     float posY = 0.0f;
+    float posZ = 0.0f;
+    float sizeY = 0.0f;
     int width = 0;
     int height = 0;
     bool visible = true;
