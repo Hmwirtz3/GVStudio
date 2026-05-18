@@ -186,6 +186,8 @@
     <ClCompile Include="src\Renderer\Shaders\Shader.cpp" />
     <ClCompile Include="src\Renderer\TerrainGenerator.cpp" />
     <ClCompile Include="src\Renderer\TerrainManager.cpp" />
+    <ClCompile Include="src\Renderer\TerrainPaintMap.cpp" />
+    <ClCompile Include="src\Renderer\TerrainPaintTool.cpp" />
     <ClCompile Include="src\Renderer\TerrainRenderer.cpp" />
     <ClCompile Include="src\Renderer\TextureSystem.cpp" />
     <ClCompile Include="src\Viewports\Dialogs\StartupDialog.cpp" />
@@ -265,6 +267,8 @@
     <ClInclude Include="include\Renderer\Shaders\Shader.h" />
     <ClInclude Include="include\Renderer\TerrainGenerator.h" />
     <ClInclude Include="include\Renderer\TerrainManager.h" />
+    <ClInclude Include="include\Renderer\TerrainPaintMap.h" />
+    <ClInclude Include="include\Renderer\TerrainPaintTool.h" />
     <ClInclude Include="include\Renderer\TerrainRenderer.h" />
     <ClInclude Include="include\Renderer\TextureSystem.h" />
     <ClInclude Include="include\Viewports\Dialogs\StartupDialog.h" />

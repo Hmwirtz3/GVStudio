@@ -1,6 +1,10 @@
 ﻿#include "Renderer/Renderer.h"
 #include "Renderer/MeshBaker.h"
 #include "Renderer/MeshExport.h"
+#include "Renderer/TerrainRenderer.h"
+#include "Renderer/TerrainManager.h"
+#include "Renderer/TerrainPaintMap.h"
+#include "Renderer/TerrainPaintTool.h"
 
 #include "3rdParty/glad/glad.h"
 
@@ -466,6 +470,124 @@ void Renderer::DrawGrid()
     glBindVertexArray(0);
 }
 
+void Renderer::RenderTerrain()
+{
+    static uint32_t vao = 0;
+    static uint32_t vbo = 0;
+
+    static size_t lastVertexCount = 0;
+
+    TerrainRenderer::Build();
+
+    const std::vector<float>& verts = TerrainRenderer::GetVertices();
+    if (verts.empty())
+        return;
+
+    if (!vao)
+        glGenVertexArrays(1, &vao);
+
+    if (!vbo)
+        glGenBuffers(1, &vbo);
+
+    glBindVertexArray(vao);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    if (verts.size() != lastVertexCount)
+    {
+        glBufferData(
+            GL_ARRAY_BUFFER,
+            verts.size() * sizeof(float),
+            verts.data(),
+            GL_DYNAMIC_DRAW
+        );
+
+        lastVertexCount = verts.size();
+    }
+    else
+    {
+        glBufferSubData(
+            GL_ARRAY_BUFFER,
+            0,
+            verts.size() * sizeof(float),
+            verts.data()
+        );
+    }
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(
+        0,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),
+        (void*)0
+    );
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),
+        (void*)(3 * sizeof(float))
+    );
+
+    glEnableVertexAttribArray(2);
+    glVertexAttribPointer(
+        2,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        8 * sizeof(float),
+        (void*)(5 * sizeof(float))
+    );
+
+    m_shader.Bind();
+
+    glUniformMatrix4fv(m_uViewLoc, 1, GL_FALSE, m_view.m);
+    glUniformMatrix4fv(m_uProjLoc, 1, GL_FALSE, m_proj.m);
+
+    Mat4 model = Mat4::Identity();
+    glUniformMatrix4fv(m_uModelLoc, 1, GL_FALSE, model.m);
+
+    const TerrainPaintMap& paintMap =
+        TerrainPaintMap::GetActive();
+
+    if (!paintMap.GetAtlasTexture().empty())
+    {
+        std::string resolved =
+            m_exportContext.ResolvePath(
+                paintMap.GetAtlasTexture()
+            );
+
+        uint32_t tex =
+            m_textureSystem.GetOrLoad(
+                resolved
+            );
+
+        if (tex)
+        {
+            m_graphics.BindTexture(tex);
+            glUniform1i(m_uUseTextureLoc, 1);
+        }
+        else
+        {
+            glUniform1i(m_uUseTextureLoc, 0);
+        }
+    }
+    else
+    {
+        glUniform1i(m_uUseTextureLoc, 0);
+    }
+
+    glUniform3f(m_uColorLoc, 1.0f, 1.0f, 1.0f);
+
+    glBindVertexArray(vao);
+    glDrawArrays(GL_TRIANGLES, 0, (GLsizei)(verts.size() / 8));
+    glBindVertexArray(0);
+}
+
 void Renderer::DrawCube(const Mat4& model)
 {
     m_shader.Bind();
@@ -573,6 +695,7 @@ void Renderer::DrawModel(const std::string& path, const Mat4& model)
         return;
 
     int& index = m_instanceDrawIndex[path];
+
 
     std::string key;
 

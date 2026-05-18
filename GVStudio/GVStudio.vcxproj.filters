@@ -300,6 +300,12 @@
     <ClCompile Include="src\Renderer\Shaders\Shader.cpp">
       <Filter>Source Files\Renderer\Shaders</Filter>
     </ClCompile>
+    <ClCompile Include="src\Renderer\TerrainPaintMap.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Renderer\TerrainPaintTool.cpp">
+      <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\GVStudio\GVStudio.h">
@@ -532,6 +538,12 @@
     </ClInclude>
     <ClInclude Include="include\Renderer\Shaders\Shader.h">
       <Filter>Header Files\Renderer\Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TerrainPaintMap.h">
+      <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Renderer\TerrainPaintTool.h">
+      <Filter>Header Files\Renderer</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

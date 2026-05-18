@@ -46,7 +46,7 @@ void EditorCamera::Update()
 
 Mat4 EditorCamera::GetProjection() const
 {
-    return Perspective(45.0f * PI / 180.0f, m_aspect, 0.1f, 1000.0f);
+    return Perspective(45.0f * PI / 180.0f, m_aspect, 0.1f, 100000.0f);
 }
 
 Mat4 EditorCamera::GetView() const
@@ -59,4 +59,27 @@ Mat4 EditorCamera::GetView() const
     Vec3 position = m_target - dir * m_distance;
 
     return LookAt(position, m_target, { 0,1,0 });
+}
+Vec3 EditorCamera::GetForward() const
+{
+    Vec3 forward =
+    {
+        sinf(m_yaw) * cosf(m_pitch),
+        sinf(m_pitch),
+        cosf(m_yaw) * cosf(m_pitch)
+    };
+
+    return Normalize(forward);
+}
+Vec3 EditorCamera::GetRight() const
+{
+    Vec3 forward = GetForward();
+    Vec3 up = { 0.0f, 1.0f, 0.0f };
+
+    return Normalize(Cross(forward, up));
+}
+
+void EditorCamera::Move(const Vec3& delta)
+{
+    m_target = m_target + delta;
 }

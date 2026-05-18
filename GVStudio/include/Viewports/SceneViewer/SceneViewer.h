@@ -6,6 +6,12 @@ class SceneViewer
 {
 public:
 
+	bool PickTerrain(
+		float mouseX,
+		float mouseY,
+		Vec3& outHitPos
+	);
+
 	void Resize(int width, int height);
 	void Update();
 

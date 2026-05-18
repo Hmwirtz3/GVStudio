@@ -10,12 +10,25 @@ class SceneObject;
 struct BakedLight;
 struct TerrainParams;
 
+struct TerrainAtlasEntry
+{
+    std::string name;
+
+    int atlasX = 0;
+    int atlasY = 0;
+
+    int atlasWidth = 1;
+    int atlasHeight = 1;
+};
+
 enum class RenderItemType
 {
     Mesh,
     CameraGizmo,
     TexturedQuad,
-    trigger
+    trigger,
+    HeightMap,
+    TerrainAtlas
 };
 
 struct RenderItem
@@ -33,11 +46,23 @@ struct RenderItem
     float posX = 0.0f;
     float posY = 0.0f;
     float posZ = 0.0f;
+
     float sizeY = 0.0f;
+
     int width = 0;
     int height = 0;
+
     bool visible = true;
+
     std::string texturePath;
+
+    int tileSize = 64;
+
+    float uvScale = 1.0f;
+
+    bool enableTransitions = true;
+
+    std::vector<TerrainAtlasEntry> atlasEntries;
 };
 
 class GatherScene

@@ -1,4 +1,5 @@
 #include "Renderer/TerrainManager.h"
+#include "Renderer/TerrainGenerator.h"
 
 namespace
 {
@@ -6,6 +7,7 @@ namespace
     uint32_t g_tileCount = 0;
     TerrainParams g_params{};
     bool g_hasTerrain = false;
+    uint32_t g_revision = 0;
 }
 
 void TerrainManager::SetTerrain(
@@ -15,10 +17,50 @@ void TerrainManager::SetTerrain(
 {
     Clear();
 
-    g_tiles = tiles;
-    g_tileCount = tileCount;
     g_params = params;
-    g_hasTerrain = (tiles != nullptr && tileCount > 0);
+
+    if (tiles && tileCount > 0)
+    {
+        g_tiles = tiles;
+        g_tileCount = tileCount;
+        g_hasTerrain = true;
+        ++g_revision;
+        return;
+    }
+
+    if (g_params.heightmapPath.empty())
+    {
+        g_hasTerrain = false;
+        ++g_revision;
+        return;
+    }
+
+    LoadedHeightmap hm = TerrainGenerator::LoadHeightmap(g_params.heightmapPath);
+
+    if (!hm.samples)
+    {
+        g_hasTerrain = false;
+        ++g_revision;
+        return;
+    }
+
+    TerrainTile* newTiles = nullptr;
+    uint32_t newCount = 0;
+
+    if (TerrainGenerator::GenerateTiles(hm, newTiles, newCount, g_params))
+    {
+        g_tiles = newTiles;
+        g_tileCount = newCount;
+        g_hasTerrain = true;
+    }
+    else
+    {
+        g_hasTerrain = false;
+    }
+
+    FreeHeightmap(hm);
+
+    ++g_revision;
 }
 
 void TerrainManager::Clear()
@@ -30,7 +72,10 @@ void TerrainManager::Clear()
     }
 
     g_tileCount = 0;
+    g_params = TerrainParams{};
     g_hasTerrain = false;
+
+    ++g_revision;
 }
 
 bool TerrainManager::HasTerrain()
@@ -56,4 +101,9 @@ uint32_t TerrainManager::GetTileCount()
 const TerrainParams& TerrainManager::GetParams()
 {
     return g_params;
+}
+
+uint32_t TerrainManager::GetRevision()
+{
+    return g_revision;
 }

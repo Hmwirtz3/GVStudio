@@ -13,16 +13,12 @@
 #include <cstdio>
 #include <cstring>
 
-
-
 struct AudioData
 {
     std::vector<uint8_t> pcm;
     uint32_t sampleRate = 0;
     uint32_t channels = 0;
 };
-
-
 
 static bool LoadWav(const std::string& path, AudioData& out)
 {
@@ -82,8 +78,6 @@ static bool LoadWav(const std::string& path, AudioData& out)
     return false;
 }
 
-
-
 void GV_ChunkExporter::WriteData(const void* data, size_t size)
 {
     if (!data || size == 0)
@@ -98,8 +92,6 @@ void GV_ChunkExporter::WriteData(const void* data, size_t size)
     buffer.insert(buffer.end(), ptr, ptr + size);
 }
 
-
-
 void GV_ChunkExporter::Align16()
 {
     size_t before = buffer.size();
@@ -108,20 +100,31 @@ void GV_ChunkExporter::Align16()
     if (pad)
     {
         buffer.insert(buffer.end(), pad, 0);
-        std::cout << "[Exporter] Align16: +" << pad
-            << " (" << before << " -> " << buffer.size() << ")\n";
+
+        std::cout
+            << "[Exporter] Align16: +"
+            << pad
+            << " ("
+            << before
+            << " -> "
+            << buffer.size()
+            << ")\n";
     }
 }
 
-
-
-void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::vector<char>& payload)
+void GV_ChunkExporter::AppendChunk(
+    uint32_t type,
+    uint32_t version,
+    const std::vector<char>& payload)
 {
     Align16();
 
     GV_ChunkHeader header{};
     header.type = type;
-    header.size = sizeof(GV_ChunkHeader) + static_cast<uint32_t>(payload.size());
+    header.size =
+        sizeof(GV_ChunkHeader)
+        + static_cast<uint32_t>(payload.size());
+
     header.version = version;
 
     std::cout << "\n[Exporter] AppendChunk\n";
@@ -129,6 +132,7 @@ void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::v
     std::cout << "  Size: " << header.size << "\n";
 
     Write(header);
+
     Align16();
 
     if (!payload.empty())
@@ -137,7 +141,13 @@ void GV_ChunkExporter::AppendChunk(uint32_t type, uint32_t version, const std::v
     Align16();
 }
 
+static void PreRegisterFolderAssets(
+    const SceneFolder& folder,
+    GV_ExportContext& ctx);
 
+static void PreRegisterObjectAssets(
+    const SceneObject& obj,
+    GV_ExportContext& ctx);
 
 static void ExportFolder(
     const SceneFolder& folder,
@@ -151,9 +161,9 @@ static void ExportObject(
     const GV_ExportContext& ctx,
     std::unordered_map<std::string, int>& instanceCounter);
 
-
-
-static void LogTextureIDPSPHex(const std::string& textureName, uint32_t textureID)
+static void LogTextureIDPSPHex(
+    const std::string& textureName,
+    uint32_t textureID)
 {
     std::cout << "  Texture: " << textureName << "\n";
     std::cout << "  TextureID: " << textureID << "\n";
@@ -168,8 +178,6 @@ static void LogTextureIDPSPHex(const std::string& textureName, uint32_t textureI
     );
 }
 
-
-
 bool GV_ExportScene(
     const SceneManager& sceneManager,
     const std::string& outputPath,
@@ -177,6 +185,13 @@ bool GV_ExportScene(
 {
     std::cout << "\n========== EXPORT START ==========\n";
     std::cout << "[Exporter] Output: " << outputPath << "\n";
+
+    std::cout << "\n[Scene] Pre-registering assets\n";
+
+    PreRegisterFolderAssets(
+        sceneManager.GetRootFolder(),
+        ctx
+    );
 
     const auto& textures = ctx.GetTextures();
     const auto& meshes = ctx.GetMeshes();
@@ -191,15 +206,29 @@ bool GV_ExportScene(
         std::cout << "\n[Scene] Writing Texture Dictionary\n";
 
         TextureDictionary dict;
-        auto data = GV_Exporter<TextureDictionary>::Export(dict, ctx);
 
-        scenePayload.WriteData(data.data(), data.size());
+        auto data =
+            GV_Exporter<TextureDictionary>::Export(
+                dict,
+                ctx
+            );
+
+        scenePayload.WriteData(
+            data.data(),
+            data.size()
+        );
+
         scenePayload.Align16();
     }
 
     std::unordered_map<std::string, int> instanceCounter;
 
-    ExportFolder(sceneManager.GetRootFolder(), scenePayload, ctx, instanceCounter);
+    ExportFolder(
+        sceneManager.GetRootFolder(),
+        scenePayload,
+        ctx,
+        instanceCounter
+    );
 
     GV_ChunkExporter finalExporter;
 
@@ -209,17 +238,28 @@ bool GV_ExportScene(
         scenePayload.buffer
     );
 
-    std::cout << "[Exporter] Final size: "
-        << finalExporter.buffer.size() << " bytes\n";
+    std::cout
+        << "[Exporter] Final size: "
+        << finalExporter.buffer.size()
+        << " bytes\n";
 
-    std::ofstream out(outputPath, std::ios::binary);
+    std::ofstream out(
+        outputPath,
+        std::ios::binary
+    );
+
     if (!out)
     {
-        std::cout << "[Exporter] ERROR: failed to open file\n";
+        std::cout
+            << "[Exporter] ERROR: failed to open file\n";
+
         return false;
     }
 
-    out.write(finalExporter.buffer.data(), finalExporter.buffer.size());
+    out.write(
+        finalExporter.buffer.data(),
+        finalExporter.buffer.size()
+    );
 
     std::cout << "[Exporter] Export complete\n";
     std::cout << "========== EXPORT END ==========\n\n";
@@ -227,7 +267,73 @@ bool GV_ExportScene(
     return true;
 }
 
+static void PreRegisterFolderAssets(
+    const SceneFolder& folder,
+    GV_ExportContext& ctx)
+{
+    for (const auto& obj : folder.objects)
+    {
+        if (obj)
+            PreRegisterObjectAssets(*obj, ctx);
+    }
 
+    for (const auto& child : folder.children)
+    {
+        if (child)
+            PreRegisterFolderAssets(*child, ctx);
+    }
+}
+
+static void PreRegisterObjectAssets(
+    const SceneObject& obj,
+    GV_ExportContext& ctx)
+{
+    if (!obj.def || !obj.def->def)
+        return;
+
+    const GV_Logic_Unit& lu = *obj.def->def;
+
+    size_t total =
+        std::min(
+            lu.params.size(),
+            obj.def->values.size()
+        );
+
+    if (
+        lu.chunkType == GV_CHUNK_BUTTON
+        || lu.chunkType == GV_CHUNK_HEIGHTMAP
+        || lu.chunkType == GV_CHUNK_CROSSHAIR
+        || lu.chunkType == GV_CHUNK_SCROLLING_MAP
+        )
+    {
+        for (size_t i = 0; i < total; i++)
+        {
+            const LU_Param_Def& def = lu.params[i];
+            const LU_Param_Val& val = obj.def->values[i];
+
+            if (def.type != ParamType::Asset)
+                continue;
+
+            if (val.sval.empty())
+                continue;
+
+            std::string resolved =
+                ctx.ResolvePath(val.sval);
+
+            ctx.RegisterTexture(resolved);
+
+            std::cout
+                << "    Texture: "
+                << val.sval
+                << "\n";
+
+            std::cout
+                << "    Resolved: "
+                << resolved
+                << "\n";
+        }
+    }
+}
 
 static void ExportFolder(
     const SceneFolder& folder,
@@ -235,9 +341,14 @@ static void ExportFolder(
     const GV_ExportContext& ctx,
     std::unordered_map<std::string, int>& instanceCounter)
 {
-    std::cout << "\n[Folder] " << folder.name
-        << " | Objects: " << folder.objects.size()
-        << " | Children: " << folder.children.size() << "\n";
+    std::cout
+        << "\n[Folder] "
+        << folder.name
+        << " | Objects: "
+        << folder.objects.size()
+        << " | Children: "
+        << folder.children.size()
+        << "\n";
 
     for (const auto& obj : folder.objects)
     {
@@ -247,17 +358,27 @@ static void ExportFolder(
             continue;
         }
 
-        ExportObject(*obj, exporter, ctx, instanceCounter);
+        ExportObject(
+            *obj,
+            exporter,
+            ctx,
+            instanceCounter
+        );
     }
 
     for (const auto& child : folder.children)
     {
         if (child)
-            ExportFolder(*child, exporter, ctx, instanceCounter);
+        {
+            ExportFolder(
+                *child,
+                exporter,
+                ctx,
+                instanceCounter
+            );
+        }
     }
 }
-
-
 
 static void ExportObject(
     const SceneObject& obj,
@@ -289,7 +410,11 @@ static void ExportObject(
 
     std::vector<ParamPair> runtimeParams;
 
-    size_t total = std::min(lu.params.size(), obj.def->values.size());
+    size_t total =
+        std::min(
+            lu.params.size(),
+            obj.def->values.size()
+        );
 
     for (size_t i = 0; i < total; i++)
     {
@@ -305,37 +430,68 @@ static void ExportObject(
         runtimeParams.push_back({ &def, &val });
     }
 
-    uint32_t paramCount = static_cast<uint32_t>(runtimeParams.size());
+    uint32_t paramCount =
+        static_cast<uint32_t>(
+            runtimeParams.size()
+            );
 
-    std::cout << "  Writing Runtime Params: " << paramCount << "\n";
+    std::cout
+        << "  Writing Runtime Params: "
+        << paramCount
+        << "\n";
 
-    innerPayload.WriteData(&paramCount, sizeof(uint32_t));
+    innerPayload.WriteData(
+        &paramCount,
+        sizeof(uint32_t)
+    );
 
     for (const auto& p : runtimeParams)
     {
         switch (p.def->type)
         {
         case ParamType::Float:
-            innerPayload.WriteData(&p.val->fval, sizeof(float));
+            innerPayload.WriteData(
+                &p.val->fval,
+                sizeof(float)
+            );
             break;
 
         case ParamType::Int:
-            innerPayload.WriteData(&p.val->ival, sizeof(int));
+            innerPayload.WriteData(
+                &p.val->ival,
+                sizeof(int)
+            );
             break;
 
         case ParamType::Bool:
-            innerPayload.WriteData(&p.val->bval, sizeof(bool));
+            innerPayload.WriteData(
+                &p.val->bval,
+                sizeof(bool)
+            );
             break;
 
         case ParamType::String:
         case ParamType::Event:
         case ParamType::Message:
         {
-            uint32_t len = static_cast<uint32_t>(p.val->sval.size());
-            innerPayload.WriteData(&len, sizeof(uint32_t));
+            uint32_t len =
+                static_cast<uint32_t>(
+                    p.val->sval.size()
+                    );
+
+            innerPayload.WriteData(
+                &len,
+                sizeof(uint32_t)
+            );
 
             if (len > 0)
-                innerPayload.WriteData(p.val->sval.data(), len);
+            {
+                innerPayload.WriteData(
+                    p.val->sval.data(),
+                    len
+                );
+            }
+
             break;
         }
 
@@ -373,24 +529,41 @@ static void ExportObject(
         }
 
         std::string base = mesh.meshName;
-        int& index = instanceCounter[base];
+
+        int& index =
+            instanceCounter[base];
 
         if (index == 0)
             mesh.meshName = base;
         else
-            mesh.meshName = base + "_inst_" + std::to_string(index);
+            mesh.meshName =
+            base
+            + "_inst_"
+            + std::to_string(index);
 
         index++;
 
-        auto data = GV_Exporter<StaticMesh>::Export(mesh, ctx);
+        auto data =
+            GV_Exporter<StaticMesh>::Export(
+                mesh,
+                ctx
+            );
 
-        std::cout << "  Size: " << data.size() << " bytes\n";
+        std::cout
+            << "  Size: "
+            << data.size()
+            << " bytes\n";
 
-        innerPayload.WriteData(data.data(), data.size());
+        innerPayload.WriteData(
+            data.data(),
+            data.size()
+        );
+
         break;
     }
 
     case GV_CHUNK_TEXTURE:
+    case GV_CHUNK_SCROLLING_MAP:
     {
         std::cout << "  → UI Texture\n";
 
@@ -411,12 +584,217 @@ static void ExportObject(
             return;
         }
 
-        std::string resolved = ctx.ResolvePath(textureName);
-        uint32_t textureID = ctx.GetTextureID(resolved);
+        std::string resolved =
+            ctx.ResolvePath(textureName);
 
-        LogTextureIDPSPHex(textureName, textureID);
+        uint32_t textureID =
+            ctx.GetTextureID(resolved);
 
-        innerPayload.WriteData(&textureID, sizeof(uint32_t));
+        LogTextureIDPSPHex(
+            textureName,
+            textureID
+        );
+
+        innerPayload.WriteData(
+            &textureID,
+            sizeof(uint32_t)
+        );
+
+        break;
+    }
+
+    case GV_CHUNK_HEIGHTMAP:
+    {
+        std::cout << "  → Heightmap\n";
+
+        std::string heightmapTexture;
+
+        float sampleSpacing = 128.0f;
+        float heightScale = 1.0f;
+        float baseHeight = 0.0f;
+
+        for (size_t i = 0; i < total; i++)
+        {
+            const LU_Param_Def& def = lu.params[i];
+            const LU_Param_Val& val = obj.def->values[i];
+
+            if (def.name == "heightmap")
+                heightmapTexture = val.sval;
+
+            if (def.name == "sampleSpacing")
+                sampleSpacing = val.fval;
+
+            if (def.name == "heightScale")
+                heightScale = val.fval;
+
+            if (def.name == "baseHeight")
+                baseHeight = val.fval;
+        }
+
+        if (heightmapTexture.empty())
+        {
+            std::cout << "  [SKIP] No heightmap assigned\n";
+            return;
+        }
+
+        std::string resolved =
+            ctx.ResolvePath(heightmapTexture);
+
+        uint32_t textureID =
+            ctx.GetTextureID(resolved);
+
+        LogTextureIDPSPHex(
+            heightmapTexture,
+            textureID
+        );
+
+        innerPayload.WriteData(
+            &textureID,
+            sizeof(uint32_t)
+        );
+
+        innerPayload.WriteData(
+            &sampleSpacing,
+            sizeof(float)
+        );
+
+        innerPayload.WriteData(
+            &heightScale,
+            sizeof(float)
+        );
+
+        innerPayload.WriteData(
+            &baseHeight,
+            sizeof(float)
+        );
+
+        break;
+    }
+
+    case GV_CHUNK_BUTTON:
+    {
+        std::cout << "  → Button\n";
+
+        std::string idleTex;
+        std::string selectedTex;
+        std::string disabledTex;
+
+        for (size_t i = 0; i < total; i++)
+        {
+            const LU_Param_Def& def = lu.params[i];
+            const LU_Param_Val& val = obj.def->values[i];
+
+            if (def.name == "textureIdle")
+                idleTex = val.sval;
+
+            if (def.name == "textureSelected")
+                selectedTex = val.sval;
+
+            if (def.name == "textureDisabled")
+                disabledTex = val.sval;
+        }
+
+        uint32_t idleID = 0;
+        uint32_t selectedID = 0;
+        uint32_t disabledID = 0;
+
+        if (!idleTex.empty())
+        {
+            std::string resolved =
+                ctx.ResolvePath(idleTex);
+
+            idleID =
+                ctx.GetTextureID(resolved);
+
+            LogTextureIDPSPHex(
+                idleTex,
+                idleID
+            );
+        }
+
+        if (!selectedTex.empty())
+        {
+            std::string resolved =
+                ctx.ResolvePath(selectedTex);
+
+            selectedID =
+                ctx.GetTextureID(resolved);
+
+            LogTextureIDPSPHex(
+                selectedTex,
+                selectedID
+            );
+        }
+
+        if (!disabledTex.empty())
+        {
+            std::string resolved =
+                ctx.ResolvePath(disabledTex);
+
+            disabledID =
+                ctx.GetTextureID(resolved);
+
+            LogTextureIDPSPHex(
+                disabledTex,
+                disabledID
+            );
+        }
+
+        innerPayload.WriteData(
+            &idleID,
+            sizeof(uint32_t)
+        );
+
+        innerPayload.WriteData(
+            &selectedID,
+            sizeof(uint32_t)
+        );
+
+        innerPayload.WriteData(
+            &disabledID,
+            sizeof(uint32_t)
+        );
+
+        break;
+    }
+
+    case GV_CHUNK_CROSSHAIR:
+    {
+        std::cout << "  → Crosshair\n";
+
+        std::string textureName;
+
+        for (size_t i = 0; i < total; i++)
+        {
+            const LU_Param_Def& def = lu.params[i];
+            const LU_Param_Val& val = obj.def->values[i];
+
+            if (def.name == "texture")
+                textureName = val.sval;
+        }
+
+        if (textureName.empty())
+        {
+            std::cout << "  [SKIP] No texture assigned\n";
+            return;
+        }
+
+        std::string resolved =
+            ctx.ResolvePath(textureName);
+
+        uint32_t textureID =
+            ctx.GetTextureID(resolved);
+
+        LogTextureIDPSPHex(
+            textureName,
+            textureID
+        );
+
+        innerPayload.WriteData(
+            &textureID,
+            sizeof(uint32_t)
+        );
+
         break;
     }
 
@@ -441,62 +819,124 @@ static void ExportObject(
             return;
         }
 
-        std::string resolved = ctx.ResolvePath(audioPath);
+        std::string resolved =
+            ctx.ResolvePath(audioPath);
 
         std::string ext;
+
         if (resolved.size() >= 4)
         {
-            ext = resolved.substr(resolved.size() - 4);
-            std::transform(ext.begin(), ext.end(), ext.begin(), ::tolower);
+            ext =
+                resolved.substr(
+                    resolved.size() - 4
+                );
+
+            std::transform(
+                ext.begin(),
+                ext.end(),
+                ext.begin(),
+                ::tolower
+            );
         }
 
         if (ext == ".mp3")
         {
-            std::cout << "  Loading MP3: " << resolved << "\n";
+            std::cout
+                << "  Loading MP3: "
+                << resolved
+                << "\n";
 
-            std::ifstream f(resolved, std::ios::binary);
+            std::ifstream f(
+                resolved,
+                std::ios::binary
+            );
+
             if (!f)
             {
-                std::cout << "  [ERROR] Failed to open MP3\n";
+                std::cout
+                    << "  [ERROR] Failed to open MP3\n";
+
                 return;
             }
 
             f.seekg(0, std::ios::end);
-            uint32_t size = (uint32_t)f.tellg();
+
+            uint32_t size =
+                (uint32_t)f.tellg();
+
             f.seekg(0, std::ios::beg);
 
             std::vector<uint8_t> data(size);
-            f.read((char*)data.data(), size);
+
+            f.read(
+                (char*)data.data(),
+                size
+            );
 
             uint32_t sampleRate = 0;
             uint32_t channels = 0;
 
-            innerPayload.WriteData(&sampleRate, sizeof(uint32_t));
-            innerPayload.WriteData(&channels, sizeof(uint32_t));
+            innerPayload.WriteData(
+                &sampleRate,
+                sizeof(uint32_t)
+            );
 
-            innerPayload.WriteData(&size, sizeof(uint32_t));
-            innerPayload.WriteData(data.data(), size);
+            innerPayload.WriteData(
+                &channels,
+                sizeof(uint32_t)
+            );
+
+            innerPayload.WriteData(
+                &size,
+                sizeof(uint32_t)
+            );
+
+            innerPayload.WriteData(
+                data.data(),
+                size
+            );
 
             innerPayload.Align16();
         }
         else
         {
-            std::cout << "  Loading WAV: " << resolved << "\n";
+            std::cout
+                << "  Loading WAV: "
+                << resolved
+                << "\n";
 
             AudioData audio;
+
             if (!LoadWav(resolved, audio))
             {
-                std::cout << "  [ERROR] Failed to load WAV\n";
+                std::cout
+                    << "  [ERROR] Failed to load WAV\n";
+
                 return;
             }
 
-            innerPayload.WriteData(&audio.sampleRate, sizeof(uint32_t));
-            innerPayload.WriteData(&audio.channels, sizeof(uint32_t));
+            innerPayload.WriteData(
+                &audio.sampleRate,
+                sizeof(uint32_t)
+            );
 
-            uint32_t size = (uint32_t)audio.pcm.size();
-            innerPayload.WriteData(&size, sizeof(uint32_t));
+            innerPayload.WriteData(
+                &audio.channels,
+                sizeof(uint32_t)
+            );
 
-            innerPayload.WriteData(audio.pcm.data(), size);
+            uint32_t size =
+                (uint32_t)audio.pcm.size();
+
+            innerPayload.WriteData(
+                &size,
+                sizeof(uint32_t)
+            );
+
+            innerPayload.WriteData(
+                audio.pcm.data(),
+                size
+            );
 
             innerPayload.Align16();
         }
@@ -506,7 +946,9 @@ static void ExportObject(
 
     default:
     {
-        std::cout << "  → No exporter (param-only chunk)\n";
+        std::cout
+            << "  → No exporter (param-only chunk)\n";
+
         break;
     }
     }

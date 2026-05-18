@@ -1,8 +1,7 @@
 #pragma once
+
 #include <cstdint>
 #include <string>
-
-struct TerrainParams;
 
 struct LoadedHeightmap
 {
@@ -11,47 +10,37 @@ struct LoadedHeightmap
     uint32_t height = 0;
 };
 
-struct TerrainVertex
+struct TerrainParams
 {
-    float x;
-    float y;
-    float z;
+    float sampleSpacing = 128.0f;
+    float heightScale = 1024.0f;
+    float baseHeight = 0.0f;
+    std::string heightmapPath;
+    std::string texturePath;
 
-    float u;
-    float v;
-
-    float r;
-    float g;
-    float b;
-};
-
-struct TerrainMesh
-{
-    TerrainVertex* vertices = nullptr;
-    uint32_t vertexCount = 0;
+    uint32_t tilesX = 0;
+    uint32_t tilesY = 0;
 };
 
 struct TerrainTile
 {
     uint32_t tileX = 0;
     uint32_t tileY = 0;
-    TerrainMesh mesh;
+    uint8_t heights[33 * 33]{};
 };
 
 class TerrainGenerator
 {
 public:
-    // TerrainGenerator.h
+    static LoadedHeightmap LoadHeightmap(const std::string& path);
+
     static bool GenerateTiles(
         const LoadedHeightmap& heightmap,
         TerrainTile*& outTiles,
         uint32_t& outTileCount,
-        const TerrainParams& params);
+        TerrainParams& params);
 
-    static LoadedHeightmap LoadHeightmap(const std::string& path);
-
-    static void FreeTiles(
-        TerrainTile* tiles,
-        uint32_t tileCount
-    );
+    static void FreeTiles(TerrainTile* tiles, uint32_t tileCount);
 };
+
+void FreeHeightmap(LoadedHeightmap& hm);

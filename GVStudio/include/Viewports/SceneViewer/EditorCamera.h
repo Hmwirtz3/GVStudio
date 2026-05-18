@@ -16,6 +16,11 @@ public:
     Mat4 GetView() const;
     Mat4 GetProjection() const;
 
+    // --- NEW ---
+    Vec3 GetForward() const;
+    Vec3 GetRight() const;
+    void Move(const Vec3& delta);
+
 private:
     float m_distance = 5.0f;
     float m_yaw = 0.0f;

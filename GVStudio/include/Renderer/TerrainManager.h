@@ -2,15 +2,14 @@
 
 #include "Renderer/TerrainGenerator.h"
 
-struct TerrainParams
-{
-    float sampleSpacing = 128.0f;
-    float heightScale = 1.0f;
-    float baseHeight = 0.0f;
-};
+#include <cstdint>
+
+
 
 class TerrainManager
 {
+
+
 public:
     static void SetTerrain(
         TerrainTile* tiles,
@@ -25,6 +24,7 @@ public:
     static const TerrainTile* GetTilesConst();
 
     static uint32_t GetTileCount();
-
     static const TerrainParams& GetParams();
+
+    static uint32_t GetRevision();
 };

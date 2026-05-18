@@ -41,6 +41,8 @@ public:
 
     const Mesh* GetBakedMesh(const std::string& key) const;
 
+    void RenderTerrain();
+
     GV::MeshSystem& GetMeshSystem();
 
     uint32_t GetColorTexture() const;

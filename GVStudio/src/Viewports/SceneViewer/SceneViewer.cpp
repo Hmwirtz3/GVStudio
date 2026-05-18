@@ -1,5 +1,10 @@
 #include "Viewports/SceneViewer/SceneViewer.h"
 #include "Renderer/GatherScene.h"
+#include "Renderer/TerrainPaintTool.h"
+#include "Renderer/TerrainPaintMap.h"
+#include "Renderer/TerrainRenderer.h"
+#include "Renderer/TerrainManager.h"
+
 #include "imgui/imgui.h"
 #include "MiniMath/MiniMath.h"
 #include "3rdParty/glad/glad.h"
@@ -7,6 +12,9 @@
 #include <vector>
 #include <cmath>
 #include <algorithm>
+#include <iostream>
+
+static TerrainPaintTool g_terrainPaintTool;
 
 void SceneViewer::Resize(int width, int height)
 {
@@ -26,9 +34,34 @@ void SceneViewer::Update()
     if (!ImGui::IsWindowHovered())
         return;
 
+    if (ImGui::IsKeyPressed(ImGuiKey_1))
+    {
+        g_terrainPaintTool.SetMaterial(0);
+        std::cout << "SET MATERIAL 0\n";
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_2))
+    {
+        g_terrainPaintTool.SetMaterial(1);
+        std::cout << "SET MATERIAL 1\n";
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_3))
+    {
+        g_terrainPaintTool.SetMaterial(2);
+        std::cout << "SET MATERIAL 2\n";
+    }
+
+    if (ImGui::IsKeyPressed(ImGuiKey_4))
+    {
+        g_terrainPaintTool.SetMaterial(3);
+        std::cout << "SET MATERIAL 3\n";
+    }
+
     const float orbitSpeed = 0.005f;
     const float panSpeed = 0.01f;
     const float zoomSpeed = 0.5f;
+    const float moveSpeed = 500.0f;
 
     if (ImGui::IsMouseDown(ImGuiMouseButton_Right))
     {
@@ -49,6 +82,119 @@ void SceneViewer::Update()
     if (io.MouseWheel != 0.0f)
     {
         m_camera.Zoom(-io.MouseWheel * zoomSpeed);
+    }
+
+    Vec3 forward = m_camera.GetForward();
+    Vec3 right = m_camera.GetRight();
+
+    forward.y = 0.0f;
+    forward = Normalize(forward);
+
+    right.y = 0.0f;
+    right = Normalize(right);
+
+    float speed = moveSpeed * io.DeltaTime;
+
+    if (ImGui::IsKeyDown(ImGuiKey_W))
+        m_camera.Move(forward * speed);
+
+    if (ImGui::IsKeyDown(ImGuiKey_S))
+        m_camera.Move(forward * -speed);
+
+    if (ImGui::IsKeyDown(ImGuiKey_A))
+        m_camera.Move(right * -speed);
+
+    if (ImGui::IsKeyDown(ImGuiKey_D))
+        m_camera.Move(right * speed);
+
+    if (io.KeyShift &&
+        ImGui::IsKeyDown(ImGuiKey_Q))
+    {
+        std::cout << "PAINT INPUT ACTIVE\n";
+
+        Vec3 rayOrigin;
+        Vec3 rayDir;
+
+        if (g_terrainPaintTool.BuildMouseRay(
+            io.MousePos.x,
+            io.MousePos.y,
+            ImGui::GetWindowPos().x,
+            ImGui::GetWindowPos().y,
+            (float)m_width,
+            (float)m_height,
+            m_camera.GetView(),
+            m_camera.GetProjection(),
+            rayOrigin,
+            rayDir))
+        {
+            std::cout << "RAY BUILT\n";
+
+            std::cout
+                << "Origin: "
+                << rayOrigin.x << ", "
+                << rayOrigin.y << ", "
+                << rayOrigin.z << "\n";
+
+            std::cout
+                << "Dir: "
+                << rayDir.x << ", "
+                << rayDir.y << ", "
+                << rayDir.z << "\n";
+
+            Vec3 pos = rayOrigin;
+
+            for (int i = 0; i < 10000; ++i)
+            {
+                pos =
+                {
+                    pos.x + rayDir.x * 4.0f,
+                    pos.y + rayDir.y * 4.0f,
+                    pos.z + rayDir.z * 4.0f
+                };
+
+                if ((i % 1000) == 0)
+                {
+                    std::cout
+                        << "Ray Pos: "
+                        << pos.x << ", "
+                        << pos.y << ", "
+                        << pos.z << "\n";
+                }
+
+                const TerrainParams& params =
+                    TerrainManager::GetParams();
+
+                const float terrainHeight =
+                    params.baseHeight;
+
+                if (pos.y <= terrainHeight)
+                {
+                    std::cout << "TERRAIN HIT\n";
+
+                    std::cout
+                        << "Paint Pos: "
+                        << pos.x << ", "
+                        << pos.z << "\n";
+
+                    g_terrainPaintTool.Paint(
+                        TerrainPaintMap::GetActive(),
+                        pos.x,
+                        pos.z,
+                        params.sampleSpacing
+                    );
+
+                    std::cout << "PAINT CALL COMPLETE\n";
+
+                    TerrainRenderer::MarkDirty();
+
+                    break;
+                }
+            }
+        }
+        else
+        {
+            std::cout << "FAILED TO BUILD RAY\n";
+        }
     }
 }
 
@@ -89,7 +235,8 @@ void SceneViewer::Render(
             if (item.modelPath.empty())
                 continue;
 
-            Mesh& mesh = m_renderer.GetMeshSystem().GetOrLoad(item.modelPath);
+            Mesh& mesh =
+                m_renderer.GetMeshSystem().GetOrLoad(item.modelPath);
 
             for (auto& part : mesh.parts)
             {
@@ -99,12 +246,16 @@ void SceneViewer::Render(
         }
     }
 
-    m_renderer.SetBakedLights(GatherScene::GetBakedLights());
+    m_renderer.SetBakedLights(
+        GatherScene::GetBakedLights()
+    );
 
     m_renderer.Begin(
         m_camera.GetView(),
         m_camera.GetProjection()
     );
+
+    m_renderer.RenderTerrain();
 
     m_renderer.DrawGrid();
 
@@ -133,11 +284,21 @@ void SceneViewer::Render(
                 continue;
 
             Mat4 model =
-                Translate({ item.posX, item.posY, item.posZ }) *
-                Scale({ (float)item.width, item.sizeY, (float)item.height });
+                Translate({
+                    item.posX,
+                    item.posY,
+                    item.posZ
+                    }) *
+                Scale({
+                    (float)item.width,
+                    item.sizeY,
+                    (float)item.height
+                    });
 
             glDisable(GL_DEPTH_TEST);
+
             m_renderer.DrawCube(model);
+
             glEnable(GL_DEPTH_TEST);
         }
     }
@@ -156,7 +317,9 @@ void SceneViewer::Render(
                     Scale({ 0.2f, 0.2f, 0.2f });
 
                 glDisable(GL_DEPTH_TEST);
+
                 m_renderer.DrawCube(cubeModel);
+
                 glEnable(GL_DEPTH_TEST);
 
                 break;
@@ -180,21 +343,47 @@ SceneObject* SceneViewer::PickObject(
 
     localY = (float)m_height - localY;
 
-    float ndcX = (2.0f * localX) / (float)m_width - 1.0f;
-    float ndcY = (2.0f * localY) / (float)m_height - 1.0f;
+    float ndcX =
+        (2.0f * localX) /
+        (float)m_width - 1.0f;
+
+    float ndcY =
+        (2.0f * localY) /
+        (float)m_height - 1.0f;
 
     Mat4 view = m_camera.GetView();
     Mat4 proj = m_camera.GetProjection();
-    Mat4 invViewProj = Inverse(proj * view);
 
-    Vec4 nearPoint = { ndcX, ndcY, -1.0f, 1.0f };
-    Vec4 farPoint = { ndcX, ndcY,  1.0f, 1.0f };
+    Mat4 invViewProj =
+        Inverse(proj * view);
 
-    Vec4 nearWorld = invViewProj * nearPoint;
-    Vec4 farWorld = invViewProj * farPoint;
+    Vec4 nearPoint =
+    {
+        ndcX,
+        ndcY,
+        -1.0f,
+        1.0f
+    };
 
-    nearWorld = nearWorld / nearWorld.w;
-    farWorld = farWorld / farWorld.w;
+    Vec4 farPoint =
+    {
+        ndcX,
+        ndcY,
+        1.0f,
+        1.0f
+    };
+
+    Vec4 nearWorld =
+        invViewProj * nearPoint;
+
+    Vec4 farWorld =
+        invViewProj * farPoint;
+
+    nearWorld =
+        nearWorld / nearWorld.w;
+
+    farWorld =
+        farWorld / farWorld.w;
 
     Vec3 rayOrigin =
     {
@@ -203,19 +392,26 @@ SceneObject* SceneViewer::PickObject(
         nearWorld.z
     };
 
-    Vec3 rayDir = Normalize(
-        Vec3
-        {
-            farWorld.x - nearWorld.x,
-            farWorld.y - nearWorld.y,
-            farWorld.z - nearWorld.z
-        }
-    );
+    Vec3 rayDir =
+        Normalize(
+            Vec3
+            {
+                farWorld.x - nearWorld.x,
+                farWorld.y - nearWorld.y,
+                farWorld.z - nearWorld.z
+            }
+        );
 
     std::vector<RenderItem> items;
-    GatherScene::Collect(scene, resourceRoot, items);
+
+    GatherScene::Collect(
+        scene,
+        resourceRoot,
+        items
+    );
 
     float closestT = 1e30f;
+
     SceneObject* hit = nullptr;
 
     for (const RenderItem& item : items)
@@ -230,10 +426,18 @@ SceneObject* SceneViewer::PickObject(
             item.model.m[14]
         };
 
-        Vec3 halfExtents = { 2.0f, 2.0f, 2.0f };
+        Vec3 halfExtents =
+        {
+            2.0f,
+            2.0f,
+            2.0f
+        };
 
-        Vec3 min = center - halfExtents;
-        Vec3 max = center + halfExtents;
+        Vec3 min =
+            center - halfExtents;
+
+        Vec3 max =
+            center + halfExtents;
 
         float tMin = 0.0f;
         float tMax = 1e30f;
@@ -262,14 +466,22 @@ SceneObject* SceneViewer::PickObject(
 
             if (fabs(direction) < 0.00001f)
             {
-                if (origin < minB || origin > maxB)
+                if (origin < minB ||
+                    origin > maxB)
+                {
                     goto nextObject;
+                }
             }
             else
             {
-                float invD = 1.0f / direction;
-                float t1 = (minB - origin) * invD;
-                float t2 = (maxB - origin) * invD;
+                float invD =
+                    1.0f / direction;
+
+                float t1 =
+                    (minB - origin) * invD;
+
+                float t2 =
+                    (maxB - origin) * invD;
 
                 if (t1 > t2)
                     std::swap(t1, t2);
@@ -285,7 +497,8 @@ SceneObject* SceneViewer::PickObject(
             }
         }
 
-        if (tMin > 0.0f && tMin < closestT)
+        if (tMin > 0.0f &&
+            tMin < closestT)
         {
             closestT = tMin;
             hit = item.object;

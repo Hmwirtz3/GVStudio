@@ -174,7 +174,7 @@ void GV_Exporter<TextureDictionary>::Build(
 
         GV_ChunkExporter texPayload;
 
-        uint32_t textureID = ctx.GetTextureID(fullPath);
+        uint32_t textureID = ctx.GetTextureID(name);
         uint32_t dataSize = (uint32_t)finalPixels.size();
 
         std::cout << "  FINAL TextureID: " << textureID << "\n";

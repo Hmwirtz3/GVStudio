@@ -8,11 +8,16 @@
 #include <map>
 #include <cstdio>
 
-static uint32_t HashID(uint32_t id)
+static uint32_t HashString(const std::string& str)
 {
     uint32_t hash = 2166136261u;
-    hash ^= id;
-    hash *= 16777619u;
+
+    for (char c : str)
+    {
+        hash ^= (uint8_t)c;
+        hash *= 16777619u;
+    }
+
     return hash ? hash : 1;
 }
 
@@ -202,13 +207,12 @@ uint32_t GV_ExportContext::RegisterTexture(const std::string& name)
     if (it != textureMap.end())
         return it->second;
 
-    uint32_t sequentialID = (uint32_t)textures.size() + 1;
-    uint32_t hashedID = HashID(sequentialID);
+    uint32_t hashedID = HashString(key);
 
     textures.push_back(key);
     textureMap[key] = hashedID;
 
-    //std::cout << "[Texture] OK: " << resolved << " ID=" << hashedID << "\n";
+ 
 
     return hashedID;
 }
