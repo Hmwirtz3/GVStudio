@@ -12,8 +12,8 @@ static PSPVertex ConvertToPSPVertex(const GV_Vertex& v)
 
     
 
-    out.u = (int16_t)(v.u * 32767.0f);
-    out.v = (int16_t)(v.v * 32767.0f);
+    out.u = v.u;
+    out.v = v.v;
 
     float r = std::clamp(v.r, 0.0f, 1.0f);
     float g = std::clamp(v.g, 0.0f, 1.0f);

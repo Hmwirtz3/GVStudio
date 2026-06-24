@@ -15,7 +15,7 @@
 struct PSPVertex
 {
     
-    int16_t u, v;
+    float u, v;
     uint32_t color;
     float x, y, z;
 };

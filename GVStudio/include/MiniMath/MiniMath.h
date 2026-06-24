@@ -14,6 +14,15 @@ struct Vec3
     Vec3 operator+(const Vec3& v) const { return { x + v.x, y + v.y, z + v.z }; }
     Vec3 operator-(const Vec3& v) const { return { x - v.x, y - v.y, z - v.z }; }
     Vec3 operator*(float s) const { return { x * s, y * s, z * s }; }
+
+    static Vec3 Lerp(const Vec3& a, const Vec3& b, float t)
+    {
+        return {
+            a.x + (b.x - a.x) * t,
+            a.y + (b.y - a.y) * t,
+            a.z + (b.z - a.z) * t
+        };
+    }
 };
 
 struct Vec2
@@ -47,7 +56,10 @@ inline float Length(const Vec3& v)
 inline Vec3 Normalize(const Vec3& v)
 {
     float len = Length(v);
-    if (len <= 0.00001f) return v;
+
+    if (len <= 0.00001f)
+        return v;
+
     return v * (1.0f / len);
 }
 
@@ -56,8 +68,10 @@ struct Vec4
     float x, y, z, w;
 
     Vec4() : x(0), y(0), z(0), w(0) {}
+
     Vec4(float X, float Y, float Z, float W)
-        : x(X), y(Y), z(Z), w(W) {
+        : x(X), y(Y), z(Z), w(W)
+    {
     }
 
     Vec4 operator/(float s) const
@@ -66,6 +80,52 @@ struct Vec4
     }
 };
 
+struct Quat
+{
+    float x, y, z, w;
+
+    Quat() : x(0), y(0), z(0), w(1) {}
+
+    Quat(float X, float Y, float Z, float W)
+        : x(X), y(Y), z(Z), w(W)
+    {
+    }
+};
+
+inline Quat Normalize(const Quat& q)
+{
+    float len = std::sqrt(
+        q.x * q.x +
+        q.y * q.y +
+        q.z * q.z +
+        q.w * q.w
+    );
+
+    if (len <= 0.00001f)
+        return q;
+
+    float inv = 1.0f / len;
+
+    return {
+        q.x * inv,
+        q.y * inv,
+        q.z * inv,
+        q.w * inv
+    };
+}
+
+inline Quat Lerp(const Quat& a, const Quat& b, float t)
+{
+    Quat result;
+
+    result.x = a.x + (b.x - a.x) * t;
+    result.y = a.y + (b.y - a.y) * t;
+    result.z = a.z + (b.z - a.z) * t;
+    result.w = a.w + (b.w - a.w) * t;
+
+    return Normalize(result);
+}
+
 struct Mat4
 {
     float m[16];
@@ -73,11 +133,27 @@ struct Mat4
     static Mat4 Identity()
     {
         Mat4 r{};
+
         r.m[0] = 1.0f;
         r.m[5] = 1.0f;
         r.m[10] = 1.0f;
         r.m[15] = 1.0f;
+
         return r;
+    }
+};
+
+struct Transform
+{
+    Vec3 translation;
+    Quat rotation;
+    Vec3 scale;
+
+    Transform()
+    {
+        translation = Vec3(0.0f, 0.0f, 0.0f);
+        rotation = Quat(0.0f, 0.0f, 0.0f, 1.0f);
+        scale = Vec3(1.0f, 1.0f, 1.0f);
     }
 };
 
@@ -115,24 +191,70 @@ inline Vec4 operator*(const Mat4& m, const Vec4& v)
 inline Mat4 Translate(const Vec3& t)
 {
     Mat4 r = Mat4::Identity();
+
     r.m[12] = t.x;
     r.m[13] = t.y;
     r.m[14] = t.z;
+
     return r;
 }
 
 inline Mat4 Scale(const Vec3& s)
 {
     Mat4 r = Mat4::Identity();
+
     r.m[0] = s.x;
     r.m[5] = s.y;
     r.m[10] = s.z;
+
     return r;
+}
+
+inline Mat4 QuaternionToMatrix(const Quat& q)
+{
+    Quat n = Normalize(q);
+
+    float xx = n.x * n.x;
+    float yy = n.y * n.y;
+    float zz = n.z * n.z;
+
+    float xy = n.x * n.y;
+    float xz = n.x * n.z;
+    float yz = n.y * n.z;
+
+    float wx = n.w * n.x;
+    float wy = n.w * n.y;
+    float wz = n.w * n.z;
+
+    Mat4 r = Mat4::Identity();
+
+    r.m[0] = 1.0f - 2.0f * (yy + zz);
+    r.m[1] = 2.0f * (xy + wz);
+    r.m[2] = 2.0f * (xz - wy);
+
+    r.m[4] = 2.0f * (xy - wz);
+    r.m[5] = 1.0f - 2.0f * (xx + zz);
+    r.m[6] = 2.0f * (yz + wx);
+
+    r.m[8] = 2.0f * (xz + wy);
+    r.m[9] = 2.0f * (yz - wx);
+    r.m[10] = 1.0f - 2.0f * (xx + yy);
+
+    return r;
+}
+
+inline Mat4 TransformToMatrix(const Transform& t)
+{
+    return
+        Translate(t.translation) *
+        QuaternionToMatrix(t.rotation) *
+        Scale(t.scale);
 }
 
 inline Mat4 RotateX(float radians)
 {
     Mat4 r = Mat4::Identity();
+
     float c = std::cos(radians);
     float s = std::sin(radians);
 
@@ -147,6 +269,7 @@ inline Mat4 RotateX(float radians)
 inline Mat4 RotateY(float radians)
 {
     Mat4 r = Mat4::Identity();
+
     float c = std::cos(radians);
     float s = std::sin(radians);
 
@@ -161,6 +284,7 @@ inline Mat4 RotateY(float radians)
 inline Mat4 RotateZ(float radians)
 {
     Mat4 r = Mat4::Identity();
+
     float c = std::cos(radians);
     float s = std::sin(radians);
 
@@ -177,6 +301,7 @@ inline Mat4 Perspective(float fovRadians, float aspect, float nearZ, float farZ)
     float tanHalfFov = std::tan(fovRadians * 0.5f);
 
     Mat4 r{};
+
     r.m[0] = 1.0f / (aspect * tanHalfFov);
     r.m[5] = 1.0f / tanHalfFov;
     r.m[10] = -(farZ + nearZ) / (farZ - nearZ);

@@ -145,6 +145,27 @@
     <Filter Include="Source Files\Renderer\Shaders">
       <UniqueIdentifier>{81bcbdfa-fce6-499b-99ab-60f49a192fc7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\3rdParty\cgltf">
+      <UniqueIdentifier>{76c771b8-5d3f-4c92-8424-988c7bec9522}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Animation">
+      <UniqueIdentifier>{7e80d985-c2f6-4830-bf66-612d3a72a14b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Animation\Import">
+      <UniqueIdentifier>{5bcd982b-655f-4435-9062-18d5e5dfd43e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Animation\Export">
+      <UniqueIdentifier>{aa1cc89a-539d-4cb2-88d8-7fda0e4773b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Animation">
+      <UniqueIdentifier>{d7689654-dcc0-4531-a822-9e078223dbf2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Animation\Import">
+      <UniqueIdentifier>{a9ba7903-6195-4a94-b175-04270992ed85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Animation\Export">
+      <UniqueIdentifier>{015012c9-f297-4056-bc6f-1809222cd39a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -305,6 +326,30 @@
     </ClCompile>
     <ClCompile Include="src\Renderer\TerrainPaintTool.cpp">
       <Filter>Source Files\Renderer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Import\AnimationImport.cpp">
+      <Filter>Source Files\Animation\Import</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Import\GLTFImport.cpp">
+      <Filter>Source Files\Animation\Import</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Import\MeshImport.cpp">
+      <Filter>Source Files\Animation\Import</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Import\SkeletonImport.cpp">
+      <Filter>Source Files\Animation\Import</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Export\AnimationExporter.cpp">
+      <Filter>Source Files\Animation\Export</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Export\SkeletonExporter.cpp">
+      <Filter>Source Files\Animation\Export</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\AnimationPlayer.cpp">
+      <Filter>Source Files\Animation</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Animation\Skeleton.cpp">
+      <Filter>Source Files\Animation</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -544,6 +589,36 @@
     </ClInclude>
     <ClInclude Include="include\Renderer\TerrainPaintTool.h">
       <Filter>Header Files\Renderer</Filter>
+    </ClInclude>
+    <ClInclude Include="include\3rdParty\cgltf\cgltf.h">
+      <Filter>Header Files\3rdParty\cgltf</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\AnimationClip.h">
+      <Filter>Header Files\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\AnimationPlayer.h">
+      <Filter>Header Files\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Skeleton.h">
+      <Filter>Header Files\Animation</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Importer\AnimationImporter.h">
+      <Filter>Header Files\Animation\Import</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Importer\GLTFImport.h">
+      <Filter>Header Files\Animation\Import</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Importer\MeshImporter.h">
+      <Filter>Header Files\Animation\Import</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Importer\SkeletonImporter.h">
+      <Filter>Header Files\Animation\Import</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Exporter\AnimationExporter.h">
+      <Filter>Header Files\Animation\Export</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Animation\Exporter\SkeletonExporter.h">
+      <Filter>Header Files\Animation\Export</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

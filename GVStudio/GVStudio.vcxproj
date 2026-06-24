@@ -151,6 +151,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\3rdParty\glad.c" />
+    <ClCompile Include="src\Animation\AnimationPlayer.cpp" />
+    <ClCompile Include="src\Animation\Export\AnimationExporter.cpp" />
+    <ClCompile Include="src\Animation\Export\SkeletonExporter.cpp" />
+    <ClCompile Include="src\Animation\Import\AnimationImport.cpp" />
+    <ClCompile Include="src\Animation\Import\GLTFImport.cpp" />
+    <ClCompile Include="src\Animation\Import\MeshImport.cpp" />
+    <ClCompile Include="src\Animation\Import\SkeletonImport.cpp" />
+    <ClCompile Include="src\Animation\Skeleton.cpp" />
     <ClCompile Include="src\Database\AssetDatabase.cpp" />
     <ClCompile Include="src\Database\LogicUnitRegistry.cpp" />
     <ClCompile Include="src\Database\ResourceDatabase.cpp" />
@@ -205,9 +213,19 @@
     <ClCompile Include="src\Viewports\Toolbars\MainToolbar\MainToolbar.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\3rdParty\cgltf\cgltf.h" />
     <ClInclude Include="include\3rdParty\glad\glad.h" />
     <ClInclude Include="include\3rdParty\KHR\KHR\khrplatform.h" />
     <ClInclude Include="include\3rdParty\STB\stb_image.h" />
+    <ClInclude Include="include\Animation\AnimationClip.h" />
+    <ClInclude Include="include\Animation\AnimationPlayer.h" />
+    <ClInclude Include="include\Animation\Exporter\AnimationExporter.h" />
+    <ClInclude Include="include\Animation\Exporter\SkeletonExporter.h" />
+    <ClInclude Include="include\Animation\Importer\AnimationImporter.h" />
+    <ClInclude Include="include\Animation\Importer\GLTFImport.h" />
+    <ClInclude Include="include\Animation\Importer\MeshImporter.h" />
+    <ClInclude Include="include\Animation\Importer\SkeletonImporter.h" />
+    <ClInclude Include="include\Animation\Skeleton.h" />
     <ClInclude Include="include\Database\AssetDatabase.h" />
     <ClInclude Include="include\Database\LogicUnitRegistry.h" />
     <ClInclude Include="include\Database\ResourceDatabase.h" />
